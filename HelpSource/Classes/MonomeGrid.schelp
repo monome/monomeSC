@@ -1,0 +1,180 @@
+CLASS:: MonomeGrid
+summary:: Interface for monome grids
+categories:: monome
+
+DESCRIPTION::
+Communication and management for monome serialosc grid controllers. For more information on monome see https://monome.org. For details on the serialosc protocol used with grid devices see https://monome.org/docs/serialosc/serial.txt.
+
+All grid coordinates and level values are 0-indexed.
+
+NOTE:: January 2011 devices only support four intensity levels (off + 3 brightness levels). The value passed in methods prefixed "lev" will be “rounded down” to the lowest available intensity as below:
+
+TABLE::
+## 0-3 || off
+## 4-7 || low intensity
+## 8-11 || medium intensity
+## 12-15 || high intensity ::
+::
+
+CLASSMETHODS::
+
+METHOD:: new
+allocate MonoM object
+
+ARGUMENT:: prefix
+message prefix to communicate with serialosc
+
+ARGUMENT:: rot
+cable orientation: left = 0, down = 1, right = 2, up = 3
+
+(also accepts 0, 90, 180, and 270 degrees)
+
+PRIVATE:: portlst
+
+PRIVATE:: rows
+
+PRIVATE:: columns
+
+PRIVATE:: initClass
+
+INSTANCEMETHODS::
+
+PRIVATE:: init
+
+METHOD:: connect
+choose which device to connect from the device list
+
+ARGUMENT:: devicenum
+device list index, begins at 0
+
+METHOD:: key
+assign a function to interpret key presses
+
+ARGUMENT:: func
+function which receives key x/y coordinates and z state
+
+code::
+// make sure to clear any running grid code before executing
+(
+~m = MonomeGrid.new("/monome", 0);
+
+s.waitForBoot({
+
+	~m.useDevice(0);
+	~m.key({ arg x,y,z;
+		case
+		{z == 1} {('('++x++','++y++') | key down').postln}
+		{z == 0} {('('++x++','++y++') | key up').postln};
+	});
+
+});
+)
+::
+
+METHOD:: led
+
+ARGUMENT:: x
+x in cartesian coordinates
+
+ARGUMENT:: y
+y in cartesian coordinates
+
+ARGUMENT:: val
+brightness level value 0-15
+
+code::
+// make sure to clear any running grid code before executing
+(
+~m = MonomeGrid.new("/monome", 0);
+
+s.waitForBoot({
+
+	~m.useDevice(0);
+
+	~m.key({ arg x,y,z;
+		~m.led(x,y,z * 15);
+	});
+
+});
+)
+::
+
+METHOD:: ledset
+
+ARGUMENT:: x
+x in cartesian coordinates
+
+ARGUMENT:: y
+y in cartesian coordinates
+
+ARGUMENT:: state
+0 (off) - 1 (full brightness)
+
+code::
+// make sure to clear any running grid code before executing
+(
+~m = MonomeGrid.new("/monome", 0);
+
+s.waitForBoot({
+
+	~m.useDevice(0);
+
+	~m.key({ arg x,y,z;
+		~m.ledset(x,y,z);
+	});
+
+});
+)
+::
+
+METHOD:: all
+set all leds to a variable brightness
+
+ARGUMENT:: val
+brightness level 0-15
+
+METHOD:: intensity
+global intensity for entire grid
+
+ARGUMENT:: val
+intensity level 0-15
+
+METHOD:: tilt_enable
+set active state of tilt sensor on (device) n to (state) s
+
+ARGUMENT:: device
+nth device: to receive tilt for
+
+ARGUMENT:: state
+0 or 1
+
+METHOD:: usePort
+use a specific port for device communication
+
+ARGUMENT:: portnum
+
+METHOD:: cleanup
+all leds are turned off and osc communication is disconnected
+
+SUBSECTION::Accessor Methods
+
+METHOD:: prefix
+RETURNS:: device prefix
+
+METHOD:: dvcnum
+RETURNS:: index of device in device list (0-indexed)
+
+METHOD:: rot
+RETURNS:: rotation of device (cable orientation): 0, 90, 180, 270
+
+METHOD:: rows
+returns:: number of rows a grid device has (1-indexed)
+
+METHOD:: cols
+RETURNS:: number of columns a grid device has (1-indexed)
+
+METHOD:: port
+RETURNS:: port the device is currently communicating on
+
+METHOD:: deviceList
+sends message to serialosc to report what devices are connected
