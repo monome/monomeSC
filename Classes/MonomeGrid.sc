@@ -85,11 +85,9 @@ MonomeGrid {
         oscout.sendMsg("/sys/rotation", rot);
 
 		// collect individual LED messages into a 'map':
-		// redrawTimer.postln;
 		quadDirty[dvcnum] = Array.fill(8,{0});
 		ledQuads[dvcnum] = Array.fill(8,{Array.fill(64,{0})});
 
-		// ((quadDirty[dvcnum])).postln;
 		redrawTimer[dvcnum] = Routine({
 			var interval = 1/60,
 			offsets = [
@@ -111,7 +109,6 @@ MonomeGrid {
 								offsets[i][1],
 								*ledQuads[dvcnum][i]
 							);
-							(prefix++"/grid/led/level/map" ++ dvcnum).postln;
 							quadDirty[dvcnum][i] = 0;
 						}
 					);
