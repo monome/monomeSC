@@ -23,6 +23,10 @@ MonomeGrid {
         seroscnet = NetAddr.new("localhost", 12002);
         seroscnet.sendMsg("/serialosc/list", "127.0.0.1", NetAddr.localAddr.port);
 
+		quadDirty = Dictionary.new;
+		ledQuads = Dictionary.new;
+		redrawTimer = Dictionary.new;
+
         StartUp.add {
 
             discovery = OSCdef.newMatching(\monomediscover,
@@ -52,24 +56,24 @@ MonomeGrid {
 
     }
 
-    *new { arg prefix, rot;
+    *new { arg rot;
 		var rotTranslate = [0,90,180,270];
 
 		rot = case
+		{rot == nil} {0}
 		{rot <= 3} {rotTranslate[rot]}
 		{rot > 3} {rot};
 
-        ^ super.new.init(prefix, rot);
+		^ super.new.init("/monome", rot);
     }
 
     init { arg prefix_, rot_;
         prefix = prefix_;
         rot = rot_;
-		quadDirty = Array.fill(8,{0});
-		ledQuads = Array.fill(8,{Array.fill(64,{0})});
     }
 
     connect { arg devicenum;
+		if( devicenum == nil, {devicenum = 0});
         dvcnum = devicenum;
         oscout = NetAddr.new("localhost", portlst[devicenum].value);
         Post << "Using device on port#" << portlst[devicenum].value << Char.nl;
@@ -81,7 +85,12 @@ MonomeGrid {
         oscout.sendMsg("/sys/rotation", rot);
 
 		// collect individual LED messages into a 'map':
-		redrawTimer = Routine({
+		// redrawTimer.postln;
+		quadDirty[dvcnum] = Array.fill(8,{0});
+		ledQuads[dvcnum] = Array.fill(8,{Array.fill(64,{0})});
+
+		// ((quadDirty[dvcnum])).postln;
+		redrawTimer[dvcnum] = Routine({
 			var interval = 1/60,
 			offsets = [
 				[0,0],[8,0],[0,8],[8,8],[16,0][24,0],[16,8],[24,8]
@@ -91,19 +100,19 @@ MonomeGrid {
 			{(rows[dvcnum] == 8) && (columns[dvcnum] == 16)}{1}
 			{(rows[dvcnum] == 16) && (columns[dvcnum] == 16)}{3}
 			{(rows[dvcnum] == 16) && (columns[dvcnum] == 32)}{7};
-
 			loop {
 				for (0, 1, {
 					arg i;
-					if(quadDirty[i] != 0,
+					if(quadDirty[dvcnum][i] != 0,
 						{
 							oscout.sendMsg(
 								prefix++"/grid/led/level/map",
 								offsets[i][0],
 								offsets[i][1],
-								*ledQuads[i]
+								*ledQuads[dvcnum][i]
 							);
-							quadDirty[i] = 0;
+							(prefix++"/grid/led/level/map" ++ dvcnum).postln;
+							quadDirty[dvcnum][i] = 0;
 						}
 					);
 					interval.yield;
@@ -111,7 +120,7 @@ MonomeGrid {
 			}
 		});
 
-		redrawTimer.play();
+		redrawTimer[dvcnum].play();
     }
 
     usePort { arg portnum;
@@ -140,7 +149,9 @@ MonomeGrid {
 		OSCFunc.newMatching(
 			{ arg message, time, addr, recvPort;
 				var x = message[1], y = message[2], z = message[3];
-				func.value(x,y,z);
+				if( portlst[dvcnum] == addr.port, {
+					func.value(x,y,z);
+				});
 			},
 			prefix++"/grid/key"
 		);
@@ -152,50 +163,50 @@ MonomeGrid {
 		// 64: quad01 (top left)
 		{(x < 8) && (y < 8)} {
 			offset = (8*y)+x;
-			ledQuads[0][offset] = val;
-			quadDirty[0] = 1;
+			ledQuads[dvcnum][0][offset] = val;
+			quadDirty[dvcnum][0] = 1;
 		}
 		// 128: quad 1 (top right)
 		{(x > 7) && (x < 16) && (y < 8)} {
 			offset = (8*y)+(x-8);
-			ledQuads[1][offset] = val;
-			quadDirty[1] = 1;
+			ledQuads[dvcnum][1][offset] = val;
+			quadDirty[dvcnum][1] = 1;
 		}
 		// 256: quad 2 (bottom left)
 		{(x < 8) && (y > 7) && (y < 16)} {
 			offset = (8*(y-8))+x;
-			ledQuads[2][offset] = val;
-			quadDirty[2] = 1;
+			ledQuads[dvcnum][2][offset] = val;
+			quadDirty[dvcnum][2] = 1;
 		}
 		// 256: quad 3 (bottom right)
 		{(x > 7) && (x < 16) && (y > 7) && (y < 16)} {
 			offset = (8*(y-8))+(x-8);
-			ledQuads[3][offset] = val;
-			quadDirty[3] = 1;
+			ledQuads[dvcnum][3][offset] = val;
+			quadDirty[dvcnum][3] = 1;
 		}
 		// 512: quad 4 (top mid-right)
 		{(x > 15) && (x < 24) && (y < 8)} {
 			offset = (8*y)+(x-16);
-			ledQuads[4][offset] = val;
-			quadDirty[4] = 1;
+			ledQuads[dvcnum][4][offset] = val;
+			quadDirty[dvcnum][4] = 1;
 		}
 		// 512: quad 5 (top far right)
 		{(x > 23) && (x < 32) && (y < 8)} {
 			offset = (8*y)+(x-24);
-			ledQuads[5][offset] = val;
-			quadDirty[5] = 1;
+			ledQuads[dvcnum][5][offset] = val;
+			quadDirty[dvcnum][5] = 1;
 		}
 		// 512: quad 6 (bottom mid-right)
 		{(x > 15) && (x < 24) && (y > 7) && (y < 16)} {
 			offset = (8*(y-8))+(x-16);
-			ledQuads[6][offset] = val;
-			quadDirty[6] = 1;
+			ledQuads[dvcnum][6][offset] = val;
+			quadDirty[dvcnum][6] = 1;
 		}
 		// 512: quad 7 (bottom far right)
 		{(x > 23) && (x < 32) && (y > 7) && (y < 16)} {
 			offset = (8*(y-8))+(x-24);
-			ledQuads[7][offset] = val;
-			quadDirty[7] = 1;
+			ledQuads[dvcnum][7][offset] = val;
+			quadDirty[dvcnum][7] = 1;
 		}
 	}
 
@@ -229,7 +240,9 @@ MonomeGrid {
     cleanup {
         this.all(0);
         discovery.free;
-		redrawTimer.stop;
+		redrawTimer.do({arg dvc;
+			redrawTimer[dvc].stop;
+		});
         oscout.disconnect;
         seroscnet.disconnect;
     }

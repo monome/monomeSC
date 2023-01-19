@@ -21,9 +21,6 @@ CLASSMETHODS::
 METHOD:: new
 allocate MonoM object
 
-ARGUMENT:: prefix
-message prefix to communicate with serialosc
-
 ARGUMENT:: rot
 cable orientation: left = 0, down = 1, right = 2, up = 3
 
@@ -47,6 +44,8 @@ choose which device to connect from the device list
 ARGUMENT:: devicenum
 device list index, begins at 0
 
+if not provided, will default to 0
+
 METHOD:: key
 assign a function to interpret key presses
 
@@ -56,11 +55,11 @@ function which receives key x/y coordinates and z state
 code::
 // make sure to clear any running grid code before executing
 (
-~m = MonomeGrid.new("/monome", 0);
+~m = MonomeGrid.new(); // no rotation argument means 0 rotation
 
 s.waitForBoot({
 
-	~m.useDevice(0);
+	~m.connect(0); // explicitly connect to the first-populated device
 	~m.key({ arg x,y,z;
 		case
 		{z == 1} {('('++x++','++y++') | key down').postln}
@@ -85,11 +84,11 @@ brightness level value 0-15
 code::
 // make sure to clear any running grid code before executing
 (
-~m = MonomeGrid.new("/monome", 0);
+~m = MonomeGrid.new(); // no rotation argument means 0 rotation
 
 s.waitForBoot({
 
-	~m.useDevice(0);
+	~m.connect(); // no device argument connects to the first-populated device
 
 	~m.key({ arg x,y,z;
 		~m.led(x,y,z * 15);
@@ -113,11 +112,11 @@ ARGUMENT:: state
 code::
 // make sure to clear any running grid code before executing
 (
-~m = MonomeGrid.new("/monome", 0);
+~m = MonomeGrid.new(); // no rotation argument means 0 rotation
 
 s.waitForBoot({
 
-	~m.useDevice(0);
+	~m.connect(0); // explicitly connect to the first-populated device
 
 	~m.key({ arg x,y,z;
 		~m.ledset(x,y,z);
