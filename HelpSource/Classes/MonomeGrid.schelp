@@ -3,9 +3,14 @@ summary:: Interface for monome grids
 categories:: monome
 
 DESCRIPTION::
-Communication and management for monome serialosc grid controllers. For more information on monome see https://monome.org. For details on the serialosc protocol used with grid devices see https://monome.org/docs/serialosc/serial.txt.
+Communication and management for monome serialosc grid controllers. For more information on monome see https://monome.org
+
+For details on the serialosc protocol used with grid devices see https://monome.org/docs/serialosc/serial.txt
 
 All grid coordinates and level values are 0-indexed.
+
+NOTE:: If a monome grid is connected after Server boot, it will not be detected until MonomeGrid.initClass() or 'Recompile Class Library' is executed.
+::
 
 NOTE:: January 2011 devices only support four intensity levels (off + 3 brightness levels). The value passed in methods prefixed "lev" will be “rounded down” to the lowest available intensity as below:
 

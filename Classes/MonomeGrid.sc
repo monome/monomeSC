@@ -10,53 +10,53 @@ raja das, ezra buchla, dan derks
 
 MonomeGrid {
 
-    classvar seroscnet, <>discovery, <>rows, <>columns, <>portlst, quadDirty, ledQuads, redrawTimer;
+	classvar seroscnet, <>discovery, <>rows, <>columns, <>portlst, quadDirty, ledQuads, redrawTimer;
 	var <>prefix, <>rot, <>dvcnum, oscout;
 
-    *initClass {
+	*initClass {
 
-        var sz, rw, cl;
+		var sz, rw, cl;
 
-        portlst = List.new(0);
-        rows = List.new(0);
-        columns = List.new(0);
-        seroscnet = NetAddr.new("localhost", 12002);
-        seroscnet.sendMsg("/serialosc/list", "127.0.0.1", NetAddr.localAddr.port);
+		portlst = List.new(0);
+		rows = List.new(0);
+		columns = List.new(0);
+		seroscnet = NetAddr.new("localhost", 12002);
+		seroscnet.sendMsg("/serialosc/list", "127.0.0.1", NetAddr.localAddr.port);
 
 		quadDirty = Dictionary.new;
 		ledQuads = Dictionary.new;
 		redrawTimer = Dictionary.new;
 
-        StartUp.add {
+		StartUp.add {
 
-            discovery = OSCdef.newMatching(\monomediscover,
-                {|msg, time, addr, recvPort|
+			discovery = OSCdef.newMatching(\monomediscover,
+				{|msg, time, addr, recvPort|
 
-                    sz = msg[2].asString.replace("monome","").replace("40h",64).asInteger;
-                    rw = case
-                    {sz == 64} {8}
-                    {sz == 128}{8}
-                    {sz == 256}{16}
+					sz = msg[2].asString.replace("monome","").replace("40h",64).asInteger;
+					rw = case
+					{sz == 64} {8}
+					{sz == 128}{8}
+					{sz == 256}{16}
 					{sz == 512}{16};
-                    cl = case
-                    {sz == 64} {8}
-                    {sz == 128}{16}
-                    {sz == 256}{16}
+					cl = case
+					{sz == 64} {8}
+					{sz == 128}{16}
+					{sz == 256}{16}
 					{sz == 512}{32};
-                    rows.add(rw);
-                    columns.add(cl);
-                    portlst.add(msg[3]);
-                    ("Device connected on port:"++msg[3]).postln;
-                    msg[1].postln;
-                    msg[2].postln;
+					rows.add(rw);
+					columns.add(cl);
+					portlst.add(msg[3]);
+					("Device connected on port:"++msg[3]).postln;
+					msg[1].postln;
+					msg[2].postln;
 
-            }, '/serialosc/device', seroscnet);
+			}, '/serialosc/device', seroscnet);
 
-        }
+		}
 
-    }
+	}
 
-    *new { arg rot;
+	*new { arg rot;
 		var rotTranslate = [0,90,180,270];
 
 		rot = case
@@ -65,89 +65,97 @@ MonomeGrid {
 		{rot > 3} {rot};
 
 		^ super.new.init("/monome", rot);
-    }
+	}
 
-    init { arg prefix_, rot_;
-        prefix = prefix_;
-        rot = rot_;
-    }
+	init { arg prefix_, rot_;
+		prefix = prefix_;
+		rot = rot_;
+	}
 
-    connect { arg devicenum;
+	connect { arg devicenum;
 		if( devicenum == nil, {devicenum = 0});
-        dvcnum = devicenum;
-        oscout = NetAddr.new("localhost", portlst[devicenum].value);
-        Post << "Using device on port#" << portlst[devicenum].value << Char.nl;
+		if( portlst[devicenum].value != nil, {
+			dvcnum = devicenum;
+			oscout = NetAddr.new("localhost", portlst[devicenum].value);
+			Post << "Using device on port#" << portlst[devicenum].value << Char.nl;
 
-		oscout.sendMsg(prefix++"/grid/led/all", 0);
+			oscout.sendMsg(prefix++"/grid/led/all", 0);
 
-        oscout.sendMsg("/sys/port", NetAddr.localAddr.port);
-        oscout.sendMsg("/sys/prefix", prefix);
-        oscout.sendMsg("/sys/rotation", rot);
+			oscout.sendMsg("/sys/port", NetAddr.localAddr.port);
+			oscout.sendMsg("/sys/prefix", prefix);
+			oscout.sendMsg("/sys/rotation", rot);
 
-		// collect individual LED messages into a 'map':
-		quadDirty[dvcnum] = Array.fill(8,{0});
-		ledQuads[dvcnum] = Array.fill(8,{Array.fill(64,{0})});
+			// collect individual LED messages into a 'map':
+			quadDirty[dvcnum] = Array.fill(8,{0});
+			ledQuads[dvcnum] = Array.fill(8,{Array.fill(64,{0})});
 
-		redrawTimer[dvcnum] = Routine({
-			var interval = 1/60,
-			offsets = [
-				[0,0],[8,0],[0,8],[8,8],[16,0][24,0],[16,8],[24,8]
-			],
-			max = case
-			{(rows[dvcnum] == 8) && (columns[dvcnum] == 8)}{0}
-			{(rows[dvcnum] == 8) && (columns[dvcnum] == 16)}{1}
-			{(rows[dvcnum] == 16) && (columns[dvcnum] == 16)}{3}
-			{(rows[dvcnum] == 16) && (columns[dvcnum] == 32)}{7};
-			loop {
-				for (0, 1, {
-					arg i;
-					if(quadDirty[dvcnum][i] != 0,
-						{
-							oscout.sendMsg(
-								prefix++"/grid/led/level/map",
-								offsets[i][0],
-								offsets[i][1],
-								*ledQuads[dvcnum][i]
-							);
-							quadDirty[dvcnum][i] = 0;
-						}
-					);
-					interval.yield;
-				});
-			}
+			redrawTimer[dvcnum] = Routine({
+				var interval = 1/60,
+				offsets = [
+					[0,0],[8,0],[0,8],[8,8],[16,0][24,0],[16,8],[24,8]
+				],
+				max = case
+				{(rows[dvcnum] == 8) && (columns[dvcnum] == 8)}{0}
+				{(rows[dvcnum] == 8) && (columns[dvcnum] == 16)}{1}
+				{(rows[dvcnum] == 16) && (columns[dvcnum] == 16)}{3}
+				{(rows[dvcnum] == 16) && (columns[dvcnum] == 32)}{7};
+				loop {
+					for (0, 1, {
+						arg i;
+						if(quadDirty[dvcnum][i] != 0,
+							{
+								oscout.sendMsg(
+									prefix++"/grid/led/level/map",
+									offsets[i][0],
+									offsets[i][1],
+									*ledQuads[dvcnum][i]
+								);
+								quadDirty[dvcnum][i] = 0;
+							}
+						);
+						interval.yield;
+					});
+				}
+			});
+
+			redrawTimer[dvcnum].play();
+		},{
+			'!! no monome grid detected !!'.postln;
+			'  connect a grid and execute MonomeGrid.initClass() ,'.postln;
+			'  or Recompile Class Library'.postln;
 		});
+	}
 
-		redrawTimer[dvcnum].play();
-    }
+	usePort { arg portnum;
+		dvcnum = portlst.indexOf(portnum);
+		oscout = NetAddr.new("localhost", portnum);
+		Post << "Using device#" << dvcnum << Char.nl;
 
-    usePort { arg portnum;
-        dvcnum = portlst.indexOf(portnum);
-        oscout = NetAddr.new("localhost", portnum);
-        Post << "Using device#" << dvcnum << Char.nl;
-
-        oscout.sendMsg("/sys/port", NetAddr.localAddr.port);
-        oscout.sendMsg("/sys/prefix", prefix);
-        oscout.sendMsg("/sys/rotation", rot);
-    }
+		oscout.sendMsg("/sys/port", NetAddr.localAddr.port);
+		oscout.sendMsg("/sys/prefix", prefix);
+		oscout.sendMsg("/sys/rotation", rot);
+	}
 
 	port {
-        ^portlst[dvcnum];
-    }
+		^portlst[dvcnum];
+	}
 
-    rows {
-        ^rows[dvcnum];
-    }
+	rows {
+		^rows[dvcnum];
+	}
 
-    cols {
-        ^columns[dvcnum];
-    }
+	cols {
+		^columns[dvcnum];
+	}
 
 	key { arg func;
 		OSCFunc.newMatching(
 			{ arg message, time, addr, recvPort;
 				var x = message[1], y = message[2], z = message[3];
-				if( portlst[dvcnum] == addr.port, {
-					func.value(x,y,z);
+				if( dvcnum != nil,{
+					if( this.port.value() == addr.port, {
+						func.value(x,y,z);
+					});
 				});
 			},
 			prefix++"/grid/key"
@@ -211,37 +219,37 @@ MonomeGrid {
 		oscout.sendMsg(prefix++"/grid/led/level/all", val);
 	}
 
-    // See here: http://monome.org/docs/tech:osc
-    // if you need further explanation of the LED methods below
-    ledset	{ arg x, y, state;
-        if ((state == 0) or: (state == 1)) {
-            oscout.sendMsg(prefix++"/grid/led/set", x, y, state);
-        } {
-            "invalid argument (state must be 0 or 1).".warn;
-        };
-    }
+	// See here: http://monome.org/docs/tech:osc
+	// if you need further explanation of the LED methods below
+	ledset	{ arg x, y, state;
+		if ((state == 0) or: (state == 1)) {
+			oscout.sendMsg(prefix++"/grid/led/set", x, y, state);
+		} {
+			"invalid argument (state must be 0 or 1).".warn;
+		};
+	}
 
-    intensity	{ arg val;
-        oscout.sendMsg(prefix++"/grid/led/intensity", val);
-    }
+	intensity	{ arg val;
+		oscout.sendMsg(prefix++"/grid/led/intensity", val);
+	}
 
 	tilt_enable { arg device, state;
 		oscout.sendMsg(prefix++"/tilt/set", device, state);
-    }
+	}
 
 	deviceList {
-        portlst.clear; rows.clear; columns.clear;
-        seroscnet.sendMsg("/serialosc/list", "127.0.0.1", NetAddr.localAddr.port);
-    }
+		portlst.clear; rows.clear; columns.clear;
+		seroscnet.sendMsg("/serialosc/list", "127.0.0.1", NetAddr.localAddr.port);
+	}
 
-    cleanup {
-        this.all(0);
-        discovery.free;
+	cleanup {
+		this.all(0);
+		discovery.free;
 		redrawTimer.do({arg dvc;
 			redrawTimer[dvc].stop;
 		});
-        oscout.disconnect;
-        seroscnet.disconnect;
-    }
+		oscout.disconnect;
+		seroscnet.disconnect;
+	}
 
 }
