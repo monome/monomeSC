@@ -46,9 +46,9 @@ MonomeGrid {
 					rows.add(rw);
 					columns.add(cl);
 					portlst.add(msg[3]);
-					("Device connected on port:"++msg[3]).postln;
-					msg[1].postln;
-					msg[2].postln;
+					("MonomeGrid device connected on port:"++msg[3]).postln;
+					("MonomeGrid serial: "++msg[1]).postln;
+					("MonomeGrid model: "++msg[2]).postln;
 
 			}, '/serialosc/device', seroscnet);
 
@@ -77,7 +77,7 @@ MonomeGrid {
 		if( portlst[devicenum].value != nil, {
 			dvcnum = devicenum;
 			oscout = NetAddr.new("localhost", portlst[devicenum].value);
-			Post << "Using device on port#" << portlst[devicenum].value << Char.nl;
+			Post << "MonomeGrid: using device on port#" << portlst[devicenum].value << Char.nl;
 
 			oscout.sendMsg(prefix++"/grid/led/all", 0);
 
@@ -129,7 +129,7 @@ MonomeGrid {
 	usePort { arg portnum;
 		dvcnum = portlst.indexOf(portnum);
 		oscout = NetAddr.new("localhost", portnum);
-		Post << "Using device#" << dvcnum << Char.nl;
+		Post << "MonomeGrid: using device #" << dvcnum << Char.nl;
 
 		oscout.sendMsg("/sys/port", NetAddr.localAddr.port);
 		oscout.sendMsg("/sys/prefix", prefix);
