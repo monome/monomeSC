@@ -2,9 +2,9 @@
 
 *monome + SuperCollider*
 
-communication and management for monome serialosc devices within the open-source audio synthesis platform SuperCollider.
+Communication and management for monome serialosc devices within the open-source audio synthesis platform SuperCollider.
 
-MonomeGrid class by raja das, ezra buchla, and dan derks.
+`MonomeGrid` class by Raja Das, Ezra Buchla, and Dan Derks.
 
 ## installation
 
