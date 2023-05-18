@@ -90,7 +90,7 @@ MonomeGrid {
 			ledQuads[dvcnum] = Array.fill(8,{Array.fill(64,{0})});
 
 			redrawTimer[dvcnum] = Routine({
-				var interval = 1/60,
+				var interval = 1/240,
 				offsets = [
 					[0,0],[8,0],[0,8],[8,8],[16,0][24,0],[16,8],[24,8]
 				],
@@ -100,7 +100,7 @@ MonomeGrid {
 				{(rows[dvcnum] == 16) && (columns[dvcnum] == 16)}{3}
 				{(rows[dvcnum] == 16) && (columns[dvcnum] == 32)}{7};
 				loop {
-					for (0, 1, {
+					for (0, max, {
 						arg i;
 						if(quadDirty[dvcnum][i] != 0,
 							{
