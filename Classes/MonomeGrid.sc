@@ -11,7 +11,7 @@ raja das, ezra buchla, dan derks
 MonomeGrid {
 
 	classvar seroscnet, <>discovery, <>rows, <>columns, <>portlst, quadDirty, ledQuads, redrawTimer;
-	var <>prefix, <>rot, <>dvcnum, oscout;
+	var <>prefix, <>rot, <>fps, <>dvcnum, oscout;
 
 	*initClass {
 
@@ -56,20 +56,29 @@ MonomeGrid {
 
 	}
 
-	*new { arg rot;
+	*new { arg rotation, prefix, fps;
 		var rotTranslate = [0,90,180,270];
 
-		rot = case
-		{rot == nil} {0}
-		{rot <= 3} {rotTranslate[rot]}
-		{rot > 3} {rot};
+		rotation = case
+		{rotation == nil} {0}
+		{rotation <= 3} {rotTranslate[rotation]}
+		{rotation > 3} {rotation};
 
-		^ super.new.init("/monome", rot);
+		prefix = case
+		{prefix == nil} {"/monome"}
+		{prefix != nil} {prefix.asString};
+
+		fps = case
+		{fps == nil} {60}
+		{fps != nil} {fps.asFloat};
+
+		^ super.new.init(prefix, rotation, fps);
 	}
 
-	init { arg prefix_, rot_;
+	init { arg prefix_, rot_, fps_;
 		prefix = prefix_;
 		rot = rot_;
+		fps = fps_;
 	}
 
 	connect { arg devicenum;
@@ -90,7 +99,7 @@ MonomeGrid {
 			ledQuads[dvcnum] = Array.fill(8,{Array.fill(64,{0})});
 
 			redrawTimer[dvcnum] = Routine({
-				var interval = 1/240,
+				var interval = 1/fps,
 				offsets = [
 					[0,0],[8,0],[0,8],[8,8],[16,0][24,0],[16,8],[24,8]
 				],

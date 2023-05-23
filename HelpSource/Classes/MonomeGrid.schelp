@@ -24,12 +24,22 @@ TABLE::
 CLASSMETHODS::
 
 METHOD:: new
-allocate MonoM object
+allocate MonomeGrid object
 
-ARGUMENT:: rot
-cable orientation: left = 0, down = 1, right = 2, up = 3
+ARGUMENT:: rotation
+cable orientation: left = 0 (default), down = 1, right = 2, up = 3
 
 (also accepts 0, 90, 180, and 270 degrees)
+
+ARGUMENT:: prefix
+assign this grid a unique string identifier
+
+defaults to "/monome" if nil
+
+ARGUMENT:: fps
+rate of maximum grid redraw in frames per second
+
+defaults to 60 if nil
 
 PRIVATE:: portlst
 
