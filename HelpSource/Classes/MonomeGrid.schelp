@@ -41,7 +41,54 @@ rate of maximum grid redraw in frames per second
 
 defaults to 60 if nil
 
+METHOD:: setAddCallback
+assign a callback function whenever a new grid is added / physically connected
+
+ARGUMENT:: func
+
+code::
+// make sure to clear any running grid code before executing
+(
+MonomeGrid.setAddCallback({
+	arg serial, port, prefix;
+	["grid was added",serial,port,prefix].postln;
+});
+)
+::
+
+METHOD:: setRemoveCallback
+assign a callback function whenever an added grid is removed / physically disconnected
+
+ARGUMENT:: func
+
+code::
+// make sure to clear any running grid code before executing
+(
+MonomeGrid.setRemoveCallback({
+	arg serial, port, prefix;
+	["grid was remnoved",serial,port,prefix].postln;
+});
+)
+::
+
+METHOD:: getConnectedDevices
+returns the serial numbers of each device that's been connected since the Server started (or last refreshConnections)
+
+METHOD:: getPortList
+returns the OSC ports of each device that's been connected since the Server started (or last refreshConnections)
+
+METHOD:: getPrefixes
+returns the assigned prefixes of each device that's been connected since the Server started (or last refreshConnections)
+
+METHOD:: refreshConnections
+sends message to serialosc to refresh SuperCollider's list of currently-connected devices
+
+
+PRIVATE:: buildOSCResponders
+
 PRIVATE:: portlst
+
+PRIVATE:: prefixes
 
 PRIVATE:: rows
 
@@ -60,6 +107,18 @@ ARGUMENT:: devicenum
 device list index, begins at 0
 
 if not provided, will default to 0
+
+METHOD:: connectToPort
+choose which device to connect via OSC port
+
+ARGUMENT:: port
+OSC port identifier
+
+METHOD:: connectToSerial
+choose which device to connect via serial string
+
+ARGUMENT:: serial
+serial identifier
 
 METHOD:: key
 assign a function to interpret key presses
@@ -178,17 +237,20 @@ RETURNS:: device prefix
 METHOD:: dvcnum
 RETURNS:: index of device in device list (0-indexed)
 
-METHOD:: rot
+METHOD:: serial
+RETURNS:: the device's serial number
+
+METHOD:: port
+RETURNS:: OSC port the device is currently communicating on
+
+METHOD:: rotation
 RETURNS:: rotation of device (cable orientation): 0, 90, 180, 270
+
+METHOD:: fps
+RETURNS:: the device's redraw rate (frames per second)
 
 METHOD:: rows
 returns:: number of rows a grid device has (1-indexed)
 
 METHOD:: cols
 RETURNS:: number of columns a grid device has (1-indexed)
-
-METHOD:: port
-RETURNS:: port the device is currently communicating on
-
-METHOD:: deviceList
-sends message to serialosc to report what devices are connected
