@@ -82,7 +82,10 @@ MonomeGrid {
 
 				var portIDX;
 
-				sz = msg[2].asString.replace("monome","").replace("40h",64).asInteger;
+				sz = case
+				{(msg[2] != 'monome zero' && msg[2] != 'monome one')} {msg[2].asString.replace("monome","").replace("40h",64).asInteger}
+				{msg[2] == 'monome one'} {128}
+				{msg[2] == 'monome zero'} {256};
 
 				if( sz != 0,{ // if not an arc
 					rw = case
@@ -125,7 +128,10 @@ MonomeGrid {
 			{|msg, time, addr, recvPort|
 				var portIDX;
 
-				sz = msg[2].asString.replace("monome","").replace("40h",64).asInteger;
+				sz = case
+				{(msg[2] != 'monome zero' && msg[2] != 'monome one')} {msg[2].asString.replace("monome","").replace("40h",64).asInteger}
+				{msg[2] == 'monome one'} {128}
+				{msg[2] == 'monome zero'} {256};
 
 				if( sz != 0,{ // if not an arc
 					rw = case
@@ -161,7 +167,10 @@ MonomeGrid {
 
 				var portIDX;
 
-				sz = msg[2].asString.replace("monome","").replace("40h",64).asInteger;
+				sz = case
+				{(msg[2] != 'monome zero' && msg[2] != 'monome one')} {msg[2].asString.replace("monome","").replace("40h",64).asInteger}
+				{msg[2] == 'monome one'} {128}
+				{msg[2] == 'monome zero'} {256};
 
 				if( sz != 0,{ // if not an arc
 					rw = case
@@ -267,7 +276,6 @@ MonomeGrid {
 			prefixDiscover.free;
 			prefixDiscover = OSCdef.newMatching(\monomeprefix,
 				{|msg, time, addr, recvPort|
-					// msg[1].postln;
 					prefixes[devicenum] = prefixID;
 			}, '/sys/prefix', oscout);
 
@@ -413,7 +421,7 @@ MonomeGrid {
 	led { arg x,y,val;
 		var offset;
 		case
-		// 64: quad01 (top left)
+		// 64: quad 0 (top left)
 		{(x < 8) && (y < 8)} {
 			offset = (8*y)+x;
 			ledQuads[dvcID][0][offset] = val;
@@ -437,30 +445,6 @@ MonomeGrid {
 			ledQuads[dvcID][3][offset] = val;
 			quadDirty[dvcID][3] = 1;
 		}
-		/*// 512: quad 4 (top mid-right)
-		{(x > 15) && (x < 24) && (y < 8)} {
-			offset = (8*y)+(x-16);
-			ledQuads[dvcID][4][offset] = val;
-			quadDirty[dvcID][4] = 1;
-		}
-		// 512: quad 5 (top far right)
-		{(x > 23) && (x < 32) && (y < 8)} {
-			offset = (8*y)+(x-24);
-			ledQuads[dvcID][5][offset] = val;
-			quadDirty[dvcID][5] = 1;
-		}
-		// 512: quad 6 (bottom mid-right)
-		{(x > 15) && (x < 24) && (y > 7) && (y < 16)} {
-			offset = (8*(y-8))+(x-16);
-			ledQuads[dvcID][6][offset] = val;
-			quadDirty[dvcID][6] = 1;
-		}
-		// 512: quad 7 (bottom far right)
-		{(x > 23) && (x < 32) && (y > 7) && (y < 16)} {
-			offset = (8*(y-8))+(x-24);
-			ledQuads[dvcID][7][offset] = val;
-			quadDirty[dvcID][7] = 1;
-		}*/
 	}
 
 	all { arg val;
