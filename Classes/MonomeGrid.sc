@@ -64,12 +64,12 @@ MonomeGrid {
 		{rotation > 3} {rotation};
 
 		prefix = case
-		{prefix == nil} {"/monome"}
-		{prefix != nil} {prefix.asString};
+		{prefix.isNil} {"/monome"}
+		{prefix.notNil} {prefix.asString};
 
 		fps = case
-		{fps == nil} {60}
-		{fps != nil} {fps.asFloat};
+		{fps.isNil} {60}
+		{fps.notNil} {fps.asFloat};
 
 		^ super.new.init(prefix, rotation, fps);
 	}
@@ -82,22 +82,23 @@ MonomeGrid {
 
 				var portIDX;
 
-				sz = case
-				{(msg[2] != 'monome zero' && msg[2] != 'monome one')} {msg[2].asString.replace("monome","").replace("40h",64).asInteger}
-				{msg[2] == 'monome one'} {128}
-				{msg[2] == 'monome zero'} {256};
+				sz = switch (msg[2])
+				{'monome one'} {128}
+				{'monome zero'} {256}
+				{'monome 128'} {128}
+				{'monome 256'} {256}
+				{'monome 64'} {64}
+				{'monome 40h'} {64};
 
-				if( sz != 0,{ // if not an arc
+				if( sz.notNil, { // if not an arc
 					rw = case
 					{sz == 64} {8}
 					{sz == 128}{8}
-					{sz == 256}{16}
-					{sz == 512}{16};
+					{sz == 256}{16};
 					cl = case
 					{sz == 64} {8}
 					{sz == 128}{16}
-					{sz == 256}{16}
-					{sz == 512}{32};
+					{sz == 256}{16};
 
 					if( portlst.includes(msg[3]) == false, {
 						rows.add(rw);
@@ -128,25 +129,26 @@ MonomeGrid {
 			{|msg, time, addr, recvPort|
 				var portIDX;
 
-				sz = case
-				{(msg[2] != 'monome zero' && msg[2] != 'monome one')} {msg[2].asString.replace("monome","").replace("40h",64).asInteger}
-				{msg[2] == 'monome one'} {128}
-				{msg[2] == 'monome zero'} {256};
+				sz = switch (msg[2])
+				{'monome one'} {128}
+				{'monome zero'} {256}
+				{'monome 128'} {128}
+				{'monome 256'} {256}
+				{'monome 64'} {64}
+				{'monome 40h'} {64};
 
-				if( sz != 0,{ // if not an arc
+				if( sz.notNil, { // if not an arc
 					rw = case
 					{sz == 64} {8}
 					{sz == 128}{8}
-					{sz == 256}{16}
-					{sz == 512}{16};
+					{sz == 256}{16};
 					cl = case
 					{sz == 64} {8}
 					{sz == 128}{16}
-					{sz == 256}{16}
-					{sz == 512}{32};
+					{sz == 256}{16};
 
 					portIDX = portlst.detectIndex({arg item, i; item == msg[3]});
-					if( portIDX != nil, {
+					if( portIDX.notNil, {
 						if( removeCallbackComplete[portIDX] == false, {
 							removeCallback.value(msg[2],msg[1],msg[3],prefixes[portIDX]);
 							("MonomeGrid device removed from port: "++msg[3]).postln;
@@ -167,22 +169,23 @@ MonomeGrid {
 
 				var portIDX;
 
-				sz = case
-				{(msg[2] != 'monome zero' && msg[2] != 'monome one')} {msg[2].asString.replace("monome","").replace("40h",64).asInteger}
-				{msg[2] == 'monome one'} {128}
-				{msg[2] == 'monome zero'} {256};
+				sz = switch (msg[2])
+				{'monome one'} {128}
+				{'monome zero'} {256}
+				{'monome 128'} {128}
+				{'monome 256'} {256}
+				{'monome 64'} {64}
+				{'monome 40h'} {64};
 
-				if( sz != 0,{ // if not an arc
+				if( sz.notNil, { // if not an arc
 					rw = case
 					{sz == 64} {8}
 					{sz == 128}{8}
-					{sz == 256}{16}
-					{sz == 512}{16};
+					{sz == 256}{16};
 					cl = case
 					{sz == 64} {8}
 					{sz == 128}{16}
-					{sz == 256}{16}
-					{sz == 512}{32};
+					{sz == 256}{16};
 
 					if( portlst.includes(msg[3]) == false, {
 						rows.add(rw);
@@ -261,7 +264,7 @@ MonomeGrid {
 
 	connect { arg devicenum;
 		if( devicenum == nil, {devicenum = 0});
-		if( portlst[devicenum].value != nil, {
+		if( (portlst[devicenum].value).notNil, {
 
 			var prefixDiscover;
 
@@ -301,7 +304,7 @@ MonomeGrid {
 				{(rows[dvcID] == 16) && (columns[dvcID] == 16)}{3};
 
 				loop {
-					if(portlst[devicenum].value != nil,{
+					if( (portlst[devicenum].value).notNil,{
 						for (0, max, {
 							arg i;
 							if(quadDirty[dvcID][i] != 0,
@@ -343,7 +346,7 @@ MonomeGrid {
 	}
 
 	port {
-		if( dvcID != nil, {
+		if( dvcID.notNil, {
 			^portlst[dvcID];
 		},{
 			^nil;
@@ -351,7 +354,7 @@ MonomeGrid {
 	}
 
 	rows {
-		if( dvcID != nil, {
+		if( dvcID.notNil, {
 			^rows[dvcID];
 		},{
 			^nil;
@@ -359,7 +362,7 @@ MonomeGrid {
 	}
 
 	cols {
-		if( dvcID != nil, {
+		if( dvcID.notNil, {
 			^columns[dvcID];
 		},{
 			^nil;
@@ -367,7 +370,7 @@ MonomeGrid {
 	}
 
 	serial {
-		if( dvcID != nil, {
+		if( dvcID.notNil, {
 			^connectedDevices[dvcID];
 		},{
 			^nil;
@@ -375,7 +378,7 @@ MonomeGrid {
 	}
 
 	prefix {
-		if( dvcID != nil, {
+		if( dvcID.notNil, {
 			^prefixes[dvcID];
 		},{
 			^nil;
@@ -383,7 +386,7 @@ MonomeGrid {
 	}
 
 	rotation {
-		if( dvcID != nil, {
+		if( dvcID.notNil, {
 			^rot
 		},{
 			^nil;
@@ -391,7 +394,7 @@ MonomeGrid {
 	}
 
 	fps {
-		if( dvcID != nil, {
+		if( dvcID.notNil, {
 			^fpsVal
 		},{
 			^nil;
@@ -408,7 +411,7 @@ MonomeGrid {
 			("keyFunc_" ++ dvcID).asSymbol,
 			{ arg message, time, addr, recvPort;
 				var x = message[1], y = message[2], z = message[3];
-				if( dvcID != nil,{
+				if( dvcID.notNil,{
 					if( this.port.value() == addr.port, {
 						func.value(x,y,z);
 					});
