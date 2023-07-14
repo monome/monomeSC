@@ -22,8 +22,6 @@ MonomeGrid {
 
 	*initClass {
 
-		var sz, rw, cl;
-
 		addCallback = nil;
 		removeCallback = nil;
 		portlst = List.new(0);
@@ -75,39 +73,27 @@ MonomeGrid {
 	}
 
 	*buildOSCResponders {
-		var sz, rw, cl;
 
 		add = OSCdef.newMatching(\monomeadd,
 			{|msg, time, addr, recvPort|
 
-				var portIDX;
+				var portIDX, sizeDiscover;
 
-				sz = switch (msg[2])
-				{'monome one'} {128}
-				{'monome zero'} {256}
-				{'monome 128'} {128}
-				{'monome 256'} {256}
-				{'monome 64'} {64}
-				{'monome 40h'} {64};
-
-				if( sz.notNil, { // if not an arc
-					rw = case
-					{sz == 64} {8}
-					{sz == 128}{8}
-					{sz == 256}{16};
-					cl = case
-					{sz == 64} {8}
-					{sz == 128}{16}
-					{sz == 256}{16};
-
+				if( (msg[2].asString).contains("arc"), { /* no arc support yet */ }, { /* grid support only: */
 					if( portlst.includes(msg[3]) == false, {
-						rows.add(rw);
-						columns.add(cl);
 						portlst.add(msg[3]);
 						prefixes.add("/monome");
 						connectedDevices.add(msg[1]);
 						addCallbackComplete.add(false);
 						removeCallbackComplete.add(false);
+						NetAddr("localhost", msg[3].value).sendMsg("/sys/info", "localhost",NetAddr.localAddr.port);
+						sizeDiscover = OSCdef.newMatching(\sizeDiscovery,
+							{|msg, time, addr, recvPort|
+								columns.add(msg[1]);
+								rows.add(msg[2]);
+								sizeDiscover.free;
+							}, '/sys/size', NetAddr("localhost", msg[3].value)
+						);
 					});
 					portIDX = portlst.detectIndex({arg item, i; item == msg[3]});
 					if( addCallbackComplete[portIDX] == false,{
@@ -129,23 +115,7 @@ MonomeGrid {
 			{|msg, time, addr, recvPort|
 				var portIDX;
 
-				sz = switch (msg[2])
-				{'monome one'} {128}
-				{'monome zero'} {256}
-				{'monome 128'} {128}
-				{'monome 256'} {256}
-				{'monome 64'} {64}
-				{'monome 40h'} {64};
-
-				if( sz.notNil, { // if not an arc
-					rw = case
-					{sz == 64} {8}
-					{sz == 128}{8}
-					{sz == 256}{16};
-					cl = case
-					{sz == 64} {8}
-					{sz == 128}{16}
-					{sz == 256}{16};
+				if( (msg[2].asString).contains("arc"), { /* no arc support yet */ }, { /* grid support only: */
 
 					portIDX = portlst.detectIndex({arg item, i; item == msg[3]});
 					if( portIDX.notNil, {
@@ -167,29 +137,11 @@ MonomeGrid {
 		discovery = OSCdef.newMatching(\monomediscover,
 			{|msg, time, addr, recvPort|
 
-				var portIDX;
+				var portIDX, sizeDiscover;
 
-				sz = switch (msg[2])
-				{'monome one'} {128}
-				{'monome zero'} {256}
-				{'monome 128'} {128}
-				{'monome 256'} {256}
-				{'monome 64'} {64}
-				{'monome 40h'} {64};
-
-				if( sz.notNil, { // if not an arc
-					rw = case
-					{sz == 64} {8}
-					{sz == 128}{8}
-					{sz == 256}{16};
-					cl = case
-					{sz == 64} {8}
-					{sz == 128}{16}
-					{sz == 256}{16};
+				if( (msg[2].asString).contains("arc"), { /* no arc support yet */ }, { /* grid support only: */
 
 					if( portlst.includes(msg[3]) == false, {
-						rows.add(rw);
-						columns.add(cl);
 						portlst.add(msg[3]);
 						connectedDevices.add(msg[1]);
 						prefixes.add("/monome");
@@ -199,6 +151,14 @@ MonomeGrid {
 						("MonomeGrid serial: "++msg[1]).postln;
 						("MonomeGrid model: "++msg[2]).postln;
 						portIDX = portlst.detectIndex({arg item, i; item == msg[3]});
+						NetAddr("localhost", msg[3].value).sendMsg("/sys/info", "localhost",NetAddr.localAddr.port);
+						sizeDiscover = OSCdef.newMatching(\sizeDiscovery,
+							{|msg, time, addr, recvPort|
+								columns.add(msg[1]);
+								rows.add(msg[2]);
+								sizeDiscover.free;
+							}, '/sys/size', NetAddr("localhost", msg[3].value)
+						);
 						addCallback.value(msg[1],msg[3],prefixes[portIDX]);
 					},{
 						// ("grid already registered!!!").postln;
