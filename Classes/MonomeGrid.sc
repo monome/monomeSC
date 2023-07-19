@@ -1,5 +1,5 @@
 /*
-
+v.1.6
 for information about monome devices:
 monome.org
 
@@ -21,8 +21,6 @@ MonomeGrid {
 	var prefixID, rot, fpsVal, dvcID, keyFunc, oscout; // instance variables
 
 	*initClass {
-
-		var sz, rw, cl;
 
 		addCallback = nil;
 		removeCallback = nil;
@@ -75,53 +73,48 @@ MonomeGrid {
 	}
 
 	*buildOSCResponders {
-		var sz, rw, cl;
 
 		add = OSCdef.newMatching(\monomeadd,
 			{|msg, time, addr, recvPort|
 
-				var portIDX;
+				var portIDX, sizeDiscover, rw, cl, portID, serial, model;
 
-				sz = switch (msg[2])
-				{'monome one'} {128}
-				{'monome zero'} {256}
-				{'monome 128'} {128}
-				{'monome 256'} {256}
-				{'monome 64'} {64}
-				{'monome 40h'} {64};
+				serial = msg[1];
+				model = msg[2];
+				portID = msg[3];
 
-				if( sz.notNil, { // if not an arc
-					rw = case
-					{sz == 64} {8}
-					{sz == 128}{8}
-					{sz == 256}{16};
-					cl = case
-					{sz == 64} {8}
-					{sz == 128}{16}
-					{sz == 256}{16};
-
-					if( portlst.includes(msg[3]) == false, {
-						rows.add(rw);
-						columns.add(cl);
-						portlst.add(msg[3]);
-						prefixes.add("/monome");
-						connectedDevices.add(msg[1]);
-						addCallbackComplete.add(false);
-						removeCallbackComplete.add(false);
-					});
-					portIDX = portlst.detectIndex({arg item, i; item == msg[3]});
-					if( addCallbackComplete[portIDX] == false,{
-						("MonomeGrid device added to port: "++msg[3]).postln;
-						("MonomeGrid serial: "++msg[1]).postln;
-						("MonomeGrid model: "++msg[2]).postln;
-						addCallback.value(msg[1],msg[3],prefixes[portIDX]);
-						addCallbackComplete[portIDX] = true;
-						removeCallbackComplete[portIDX] = false;
-					});
-				}
+				NetAddr("localhost", msg[3].value).sendMsg("/sys/info", "localhost",NetAddr.localAddr.port);
+				sizeDiscover = OSCdef.newMatching(\sizeDiscovery,
+					{|msg, time, addr, recvPort|
+						cl = msg[1];
+						rw = msg[2];
+						if( (cl * rw) > 0, { /* grid support only: */
+							if( portlst.includes(portID) == false, {
+								columns.add(msg[1]);
+								rows.add(msg[2]);
+								portlst.add(portID);
+								prefixes.add("/monome");
+								connectedDevices.add(serial);
+								addCallbackComplete.add(false);
+								removeCallbackComplete.add(false);
+							});
+							portIDX = portlst.detectIndex({arg item, i; item == portID});
+							if( addCallbackComplete[portIDX] == false,{
+								("MonomeGrid device added to port: "++portID).postln;
+								("MonomeGrid serial: "++serial).postln;
+								("MonomeGrid model: "++model).postln;
+								addCallback.value(serial,portID,prefixes[portIDX]);
+								addCallbackComplete[portIDX] = true;
+								removeCallbackComplete[portIDX] = false;
+							});
+						},{
+							"no monome arc support yet".postln;
+						};
+						seroscnet.sendMsg("/serialosc/notify", "127.0.0.1", NetAddr.localAddr.port);
+						sizeDiscover.free;
+						);
+					}, '/sys/size', NetAddr("localhost", msg[3].value)
 				);
-
-				seroscnet.sendMsg("/serialosc/notify", "127.0.0.1", NetAddr.localAddr.port);
 
 		}, '/serialosc/add', seroscnet);
 
@@ -129,34 +122,15 @@ MonomeGrid {
 			{|msg, time, addr, recvPort|
 				var portIDX;
 
-				sz = switch (msg[2])
-				{'monome one'} {128}
-				{'monome zero'} {256}
-				{'monome 128'} {128}
-				{'monome 256'} {256}
-				{'monome 64'} {64}
-				{'monome 40h'} {64};
-
-				if( sz.notNil, { // if not an arc
-					rw = case
-					{sz == 64} {8}
-					{sz == 128}{8}
-					{sz == 256}{16};
-					cl = case
-					{sz == 64} {8}
-					{sz == 128}{16}
-					{sz == 256}{16};
-
-					portIDX = portlst.detectIndex({arg item, i; item == msg[3]});
-					if( portIDX.notNil, {
-						if( removeCallbackComplete[portIDX] == false, {
-							removeCallback.value(msg[2],msg[1],msg[3],prefixes[portIDX]);
-							("MonomeGrid device removed from port: "++msg[3]).postln;
-							("MonomeGrid serial: "++msg[1]).postln;
-							("MonomeGrid model: "++msg[2]).postln;
-							addCallbackComplete[portIDX] = false;
-							removeCallbackComplete[portIDX] = true;
-						});
+				portIDX = portlst.detectIndex({arg item, i; item == msg[3]});
+				if( portIDX.notNil, {
+					if( removeCallbackComplete[portIDX] == false, {
+						removeCallback.value(msg[2],msg[1],msg[3],prefixes[portIDX]);
+						("MonomeGrid device removed from port: "++msg[3]).postln;
+						("MonomeGrid serial: "++msg[1]).postln;
+						("MonomeGrid model: "++msg[2]).postln;
+						addCallbackComplete[portIDX] = false;
+						removeCallbackComplete[portIDX] = true;
 					});
 				});
 
@@ -167,45 +141,42 @@ MonomeGrid {
 		discovery = OSCdef.newMatching(\monomediscover,
 			{|msg, time, addr, recvPort|
 
-				var portIDX;
+				var portIDX, sizeDiscover, rw, cl, portID, serial, model;
 
-				sz = switch (msg[2])
-				{'monome one'} {128}
-				{'monome zero'} {256}
-				{'monome 128'} {128}
-				{'monome 256'} {256}
-				{'monome 64'} {64}
-				{'monome 40h'} {64};
+				serial = msg[1];
+				model = msg[2];
+				portID = msg[3];
 
-				if( sz.notNil, { // if not an arc
-					rw = case
-					{sz == 64} {8}
-					{sz == 128}{8}
-					{sz == 256}{16};
-					cl = case
-					{sz == 64} {8}
-					{sz == 128}{16}
-					{sz == 256}{16};
-
-					if( portlst.includes(msg[3]) == false, {
-						rows.add(rw);
-						columns.add(cl);
-						portlst.add(msg[3]);
-						connectedDevices.add(msg[1]);
-						prefixes.add("/monome");
-						addCallbackComplete.add(false);
-						removeCallbackComplete.add(false);
-						("MonomeGrid device connected to port: "++msg[3]).postln;
-						("MonomeGrid serial: "++msg[1]).postln;
-						("MonomeGrid model: "++msg[2]).postln;
-						portIDX = portlst.detectIndex({arg item, i; item == msg[3]});
-						addCallback.value(msg[1],msg[3],prefixes[portIDX]);
-					},{
-						// ("grid already registered!!!").postln;
-					});
-				});
-
-				seroscnet.sendMsg("/serialosc/notify", "127.0.0.1", NetAddr.localAddr.port);
+				NetAddr("localhost", msg[3].value).sendMsg("/sys/info", "localhost",NetAddr.localAddr.port);
+				sizeDiscover = OSCdef.newMatching(\sizeDiscovery,
+					{|msg, time, addr, recvPort|
+						cl = msg[1];
+						rw = msg[2];
+						if( (cl * rw) > 0, { /* grid support only: */
+							if( portlst.includes(portID) == false, {
+								portlst.add(portID);
+								connectedDevices.add(serial);
+								prefixes.add("/monome");
+								addCallbackComplete.add(false);
+								removeCallbackComplete.add(false);
+								("MonomeGrid device connected to port: "++portID).postln;
+								("MonomeGrid serial: "++serial).postln;
+								("MonomeGrid model: "++model).postln;
+								portIDX = portlst.detectIndex({arg item, i; item == portID});
+								columns.add(cl);
+								rows.add(rw);
+								addCallback.value(serial,portID,prefixes[portIDX]);
+							},{
+								// ("grid already registered!!!").postln;
+							});
+						},{
+							"no monome arc support yet".postln;
+						};
+						seroscnet.sendMsg("/serialosc/notify", "127.0.0.1", NetAddr.localAddr.port);
+						sizeDiscover.free;
+						);
+					}, '/sys/size', NetAddr("localhost", msg[3].value)
+				);
 
 		}, '/serialosc/device', seroscnet);
 
