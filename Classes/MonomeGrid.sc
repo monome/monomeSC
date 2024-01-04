@@ -1,7 +1,10 @@
 /*
-v.1.6
+v.1.7
 for information about monome devices:
-monome.org
+https://monome.org
+
+for further explanation of serialosc programming:
+https://monome.org/docs/serialosc/osc/
 
 written by:
 raja das, ezra buchla, dan derks
@@ -423,13 +426,19 @@ MonomeGrid {
 
 	all { arg val;
 		oscout.sendMsg(prefixID++"/grid/led/level/all", val);
+		ledQuads[dvcID].do({
+			arg item,table;
+			ledQuads[dvcID][table].do({
+				arg i,slot;
+				ledQuads[dvcID][table][slot] = val;
+			});
+		});
 	}
 
-	// See here: http://monome.org/docs/tech:osc
-	// if you need further explanation of the LED methods below
 	ledset	{ arg x, y, state;
 		if ((state == 0) or: (state == 1)) {
 			oscout.sendMsg(prefixID++"/grid/led/set", x, y, state);
+			this.led(x, y, state*15);
 		} {
 			"invalid argument (state must be 0 or 1).".warn;
 		};
