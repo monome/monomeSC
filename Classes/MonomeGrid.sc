@@ -1,5 +1,5 @@
 /*
-v.1.7
+v.1.8
 for information about monome devices:
 https://monome.org
 
@@ -7,54 +7,13 @@ for further explanation of serialosc programming:
 https://monome.org/docs/serialosc/osc/
 
 written by:
-raja das, ezra buchla, dan derks
+raja das, ezra buchla, dani derks
 
 */
 
-MonomeGrid {
+MonomeGrid : Monome{
 
-	classvar seroscnet, discovery,
-	prefixHandler,
-	add, addCallback, addCallbackComplete,
-	remove, removeCallback, removeCallbackComplete,
-	rows, columns,
-	portlst, prefixes, connectedDevices,
-	quadDirty, ledQuads, redrawTimers;
-
-	var prefixID, rot, fpsVal, dvcID, keyFunc, oscout; // instance variables
-
-	*initClass {
-
-		addCallback = nil;
-		removeCallback = nil;
-		portlst = List.new(0);
-		connectedDevices = List.new(0);
-		addCallbackComplete = List.new(0);
-		removeCallbackComplete = List.new(0);
-		rows = List.new(0);
-		columns = List.new(0);
-		prefixes = List.new(0);
-		seroscnet = NetAddr.new("localhost", 12002);
-		seroscnet.sendMsg("/serialosc/list", "127.0.0.1", NetAddr.localAddr.port);
-		seroscnet.sendMsg("/serialosc/notify", "127.0.0.1", NetAddr.localAddr.port);
-
-		quadDirty = Dictionary.new;
-		ledQuads = Dictionary.new;
-		redrawTimers = Dictionary.new;
-
-		this.buildOSCResponders;
-
-		ServerQuit.add({
-			seroscnet.disconnect;
-			add.free;
-			discovery.free;
-			remove.free;
-			redrawTimers.do({arg dvc;
-				redrawTimers[dvc].stop;
-			});
-		},\default);
-
-	}
+	var prefixID, rot, fpsVal, dvcID, keyFunc, oscout, isArc; // instance variables
 
 	*new { arg rotation, prefix, fps;
 		var rotTranslate = [0,90,180,270];
@@ -72,147 +31,11 @@ MonomeGrid {
 		{fps.isNil} {60}
 		{fps.notNil} {fps.asFloat};
 
-		^ super.new.init(prefix, rotation, fps);
+		^ super.new.initGrid(prefix, rotation, fps);
 	}
 
-	*buildOSCResponders {
-
-		add = OSCdef.newMatching(\monomeadd,
-			{|msg, time, addr, recvPort|
-
-				var portIDX, sizeDiscover, rw, cl, portID, serial, model;
-
-				serial = msg[1];
-				model = msg[2];
-				portID = msg[3];
-
-				NetAddr("localhost", msg[3].value).sendMsg("/sys/info", "localhost",NetAddr.localAddr.port);
-				sizeDiscover = OSCdef.newMatching(\sizeDiscovery,
-					{|msg, time, addr, recvPort|
-						cl = msg[1];
-						rw = msg[2];
-						if( (cl * rw) > 0, { /* grid support only: */
-							if( portlst.includes(portID) == false, {
-								columns.add(msg[1]);
-								rows.add(msg[2]);
-								portlst.add(portID);
-								prefixes.add("/monome");
-								connectedDevices.add(serial);
-								addCallbackComplete.add(false);
-								removeCallbackComplete.add(false);
-							});
-							portIDX = portlst.detectIndex({arg item, i; item == portID});
-							if( addCallbackComplete[portIDX] == false,{
-								("MonomeGrid device added to port: "++portID).postln;
-								("MonomeGrid serial: "++serial).postln;
-								("MonomeGrid model: "++model).postln;
-								addCallback.value(serial,portID,prefixes[portIDX]);
-								addCallbackComplete[portIDX] = true;
-								removeCallbackComplete[portIDX] = false;
-							});
-						},{
-							"no monome arc support yet".postln;
-						};
-						seroscnet.sendMsg("/serialosc/notify", "127.0.0.1", NetAddr.localAddr.port);
-						sizeDiscover.free;
-						);
-					}, '/sys/size', NetAddr("localhost", msg[3].value)
-				);
-
-		}, '/serialosc/add', seroscnet);
-
-		remove = OSCdef.newMatching(\monomeremove,
-			{|msg, time, addr, recvPort|
-				var portIDX;
-
-				portIDX = portlst.detectIndex({arg item, i; item == msg[3]});
-				if( portIDX.notNil, {
-					if( removeCallbackComplete[portIDX] == false, {
-						removeCallback.value(msg[2],msg[1],msg[3],prefixes[portIDX]);
-						("MonomeGrid device removed from port: "++msg[3]).postln;
-						("MonomeGrid serial: "++msg[1]).postln;
-						("MonomeGrid model: "++msg[2]).postln;
-						addCallbackComplete[portIDX] = false;
-						removeCallbackComplete[portIDX] = true;
-					});
-				});
-
-				seroscnet.sendMsg("/serialosc/notify", "127.0.0.1", NetAddr.localAddr.port);
-
-		}, '/serialosc/remove', seroscnet);
-
-		discovery = OSCdef.newMatching(\monomediscover,
-			{|msg, time, addr, recvPort|
-
-				var portIDX, sizeDiscover, rw, cl, portID, serial, model;
-
-				serial = msg[1];
-				model = msg[2];
-				portID = msg[3];
-
-				NetAddr("localhost", msg[3].value).sendMsg("/sys/info", "localhost",NetAddr.localAddr.port);
-				sizeDiscover = OSCdef.newMatching(\sizeDiscovery,
-					{|msg, time, addr, recvPort|
-						cl = msg[1];
-						rw = msg[2];
-						if( (cl * rw) > 0, { /* grid support only: */
-							if( portlst.includes(portID) == false, {
-								portlst.add(portID);
-								connectedDevices.add(serial);
-								prefixes.add("/monome");
-								addCallbackComplete.add(false);
-								removeCallbackComplete.add(false);
-								("MonomeGrid device connected to port: "++portID).postln;
-								("MonomeGrid serial: "++serial).postln;
-								("MonomeGrid model: "++model).postln;
-								portIDX = portlst.detectIndex({arg item, i; item == portID});
-								columns.add(cl);
-								rows.add(rw);
-								addCallback.value(serial,portID,prefixes[portIDX]);
-							},{
-								// ("grid already registered!!!").postln;
-							});
-						},{
-							"no monome arc support yet".postln;
-						};
-						seroscnet.sendMsg("/serialosc/notify", "127.0.0.1", NetAddr.localAddr.port);
-						sizeDiscover.free;
-						);
-					}, '/sys/size', NetAddr("localhost", msg[3].value)
-				);
-
-		}, '/serialosc/device', seroscnet);
-
-	}
-
-	*refreshConnections {
-		portlst.clear; connectedDevices.clear; prefixes.clear; rows.clear; columns.clear;
-		seroscnet.sendMsg("/serialosc/list", "127.0.0.1", NetAddr.localAddr.port);
-	}
-
-	*getConnectedDevices {
-		^connectedDevices;
-	}
-
-	*getPortList {
-		^portlst;
-	}
-
-	*getPrefixes {
-		^prefixes;
-	}
-
-	*setAddCallback { arg func;
-		addCallback = nil;
-		addCallback = func;
-	}
-
-	*setRemoveCallback { arg func;
-		removeCallback = nil;
-		removeCallback = func;
-	}
-
-	init { arg prefix_, rot_, fps_;
+	initGrid { arg prefix_, rot_, fps_;
+		"initializing grid".postln;
 		prefixID = prefix_;
 		rot = rot_;
 		fpsVal = fps_;
@@ -228,8 +51,8 @@ MonomeGrid {
 	}
 
 	connectToSerial { arg serial;
-		if( connectedDevices.includes(serial.asSymbol),{
-			var idx = connectedDevices.detectIndex({arg item, i; item == serial});
+		if( registeredDevices.includes(serial.asSymbol),{
+			var idx = registeredDevices.detectIndex({arg item, i; item == serial});
 			this.connect(idx);
 		},{
 			("no monome grid connected with specified serial").warn;
@@ -242,13 +65,15 @@ MonomeGrid {
 
 			var prefixDiscover;
 
-			MonomeGrid.buildOSCResponders;
+			Monome.buildOSCResponders;
 
 			dvcID = devicenum;
 			oscout = NetAddr.new("localhost", portlst[devicenum].value);
 			Post << "MonomeGrid: using device on port #" << portlst[devicenum].value << Char.nl;
 
 			oscout.sendMsg(prefixID++"/grid/led/all", 0);
+
+			prefixes[devicenum] = prefixID;
 
 			prefixDiscover.free;
 			prefixDiscover = OSCdef.newMatching(\monomeprefix,
@@ -302,7 +127,7 @@ MonomeGrid {
 
 			redrawTimers[dvcID].play();
 			addCallbackComplete[dvcID] = false;
-			addCallback.value(connectedDevices[dvcID], portlst[dvcID], prefixes[dvcID]);
+			addCallback.value(registeredDevices[dvcID], portlst[dvcID], prefixes[dvcID]);
 			seroscnet.sendMsg("/serialosc/notify", "127.0.0.1", NetAddr.localAddr.port);
 		},{
 			("no monome grid detected at device slot " ++ devicenum).warn;
@@ -345,13 +170,13 @@ MonomeGrid {
 
 	serial {
 		if( dvcID.notNil, {
-			^connectedDevices[dvcID];
+			^registeredDevices[dvcID];
 		},{
 			^nil;
 		});
 	}
 
-	prefix {
+	prefix{
 		if( dvcID.notNil, {
 			^prefixes[dvcID];
 		},{
@@ -378,7 +203,6 @@ MonomeGrid {
 	dvcnum {
 		^dvcID;
 	}
-
 
 	key { arg func;
 		keyFunc = OSCdef.newMatching(
@@ -457,5 +281,4 @@ MonomeGrid {
 		keyFunc.free;
 		oscout.disconnect;
 	}
-
 }

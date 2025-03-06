@@ -7,10 +7,7 @@ Communication and management for monome serialosc grid controllers. For more inf
 
 For details on the serialosc protocol used with grid devices see https://monome.org/docs/serialosc/serial.txt
 
-All grid coordinates and level values are 0-indexed.
-
-NOTE:: If a monome grid is connected after Server boot, it will not be detected until MonomeGrid.initClass() or 'Recompile Class Library' is executed.
-::
+NOTE:: All grid coordinates and level values are 0-indexed.::
 
 NOTE:: January 2011 devices only support four intensity levels (off + 3 brightness levels). The value passed in methods prefixed "lev" will be “rounded down” to the lowest available intensity as below:
 
@@ -40,48 +37,6 @@ ARGUMENT:: fps
 rate of maximum grid redraw in frames per second
 
 defaults to 60 if nil
-
-METHOD:: setAddCallback
-assign a callback function whenever a new grid is added / physically connected
-
-ARGUMENT:: func
-
-code::
-// make sure to clear any running grid code before executing
-(
-MonomeGrid.setAddCallback({
-	arg serial, port, prefix;
-	["grid was added",serial,port,prefix].postln;
-});
-)
-::
-
-METHOD:: setRemoveCallback
-assign a callback function whenever an added grid is removed / physically disconnected
-
-ARGUMENT:: func
-
-code::
-// make sure to clear any running grid code before executing
-(
-MonomeGrid.setRemoveCallback({
-	arg serial, port, prefix;
-	["grid was removed",serial,port,prefix].postln;
-});
-)
-::
-
-METHOD:: getConnectedDevices
-returns the serial numbers of each device that's been connected since the Server started (or last refreshConnections)
-
-METHOD:: getPortList
-returns the OSC ports of each device that's been connected since the Server started (or last refreshConnections)
-
-METHOD:: getPrefixes
-returns the assigned prefixes of each device that's been connected since the Server started (or last refreshConnections)
-
-METHOD:: refreshConnections
-sends message to serialosc to refresh SuperCollider's list of currently-connected devices
 
 
 PRIVATE:: buildOSCResponders
@@ -254,3 +209,5 @@ returns:: number of rows a grid device has (1-indexed)
 
 METHOD:: cols
 RETURNS:: number of columns a grid device has (1-indexed)
+
+PRIVATE:: initGrid

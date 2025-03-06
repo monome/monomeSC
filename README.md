@@ -4,7 +4,11 @@
 
 Communication and management for monome serialosc devices within the open-source audio synthesis platform SuperCollider.
 
-`MonomeGrid` class by Raja, Ezra Buchla, and Dan Derks.
+Contains:
+
+- `Monome` class (by Raja Das, Ezra Buchla, and Dani Derks) manages serialosc server relay
+- `MonomeGrid` subclass (Ibid.) connects monome grids (all editions)
+- `MonomeArc` subclass (by Joseph Rangel and Dani Derks) connects monome arcs (all editions)
 
 ## installation
 

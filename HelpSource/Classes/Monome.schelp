@@ -1,0 +1,70 @@
+CLASS:: Monome
+summary:: Interface for monome serialosc devices
+categories:: monome
+
+DESCRIPTION::
+Communication and management for monome serialosc controllers. For more information on monome see https://monome.org
+
+For details on the serialosc protocol used with grid devices see https://monome.org/docs/serialosc/serial.txt
+
+All coordinates, identifiers, and level values are 0-indexed.
+
+CLASSMETHODS::
+
+METHOD:: setAddCallback
+assign a callback function whenever a new grid is added / physically connected
+
+ARGUMENT:: func
+
+code::
+(
+Monome.setAddCallback({
+	arg serial, port, prefix;
+	["device was added",serial,port,prefix].postln;
+});
+)
+::
+
+METHOD:: setRemoveCallback
+assign a callback function whenever an added grid is removed / physically disconnected
+
+ARGUMENT:: func
+
+code::
+(
+Monome.setRemoveCallback({
+	arg serial, port, prefix;
+	["device was removed",serial,port,prefix].postln;
+});
+)
+::
+
+METHOD:: getRegisteredDevices
+returns the serial numbers of each device that's been connected since the Server started (or last refreshConnections)
+
+METHOD:: getPortList
+returns the OSC ports of each device that's been connected since the Server started (or last refreshConnections)
+
+METHOD:: getPrefixes
+returns the assigned prefixes of each device that's been connected since the Server started (or last refreshConnections)
+
+METHOD:: refreshConnections
+sends message to serialosc to refresh SuperCollider's list of currently-connected devices
+
+PRIVATE:: new
+
+PRIVATE:: buildOSCResponders
+
+PRIVATE:: portlst
+
+PRIVATE:: prefixes
+
+PRIVATE:: rows
+
+PRIVATE:: columns
+
+PRIVATE:: initClass
+
+INSTANCEMETHODS::
+
+PRIVATE:: init
