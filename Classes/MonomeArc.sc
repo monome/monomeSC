@@ -13,10 +13,10 @@ joseph rangel, dani derks
 
 MonomeArc : Monome{
 
-	var prefixID, scaleFactor, dvcID, oscout, deltaFunc, keyFunc, deltaFunc;
+	var prefixID, scaleFactor, dvcID, oscout, deltaFunc, keyFunc, sens, tick;
 
 	*new { arg rotation, prefix;
-		var fps, rotTranslate = [0,90,180,270];
+		var rotTranslate = [0,90,180,270];
 
 		rotation = case
 		{rotation == nil} {0}
@@ -24,14 +24,10 @@ MonomeArc : Monome{
 		{rotation > 3} {rotation};
 
 		prefix = case
-		{prefix.isNil} {"/monomeArc"}
+		{prefix.isNil} {"/monome"}
 		{prefix.notNil} {prefix.asString};
 
-		fps = case
-		{fps.isNil} {60}
-		{fps.notNil} {fps.asFloat};
-
-		^ super.new.initArc(prefix, rotation, fps);
+		^ super.new.initArc(prefix, rotation);
 	}
 
 	initArc { arg prefix_, rot_;
@@ -39,6 +35,8 @@ MonomeArc : Monome{
 		"initializing arc".postln;
 		prefixID = prefix_;
 		rot = rot_;
+		sens = [1,1,1,1];
+		tick = [0,0,0,0];
 
 		case
 		{ rot == 0 } { scaleFactor = 0 }
@@ -73,7 +71,12 @@ MonomeArc : Monome{
 	}
 
 	connect { arg devicenum;
-		if( devicenum == nil, {devicenum = 0});
+		if( devicenum == nil && deviceTypes.includesEqual("arc"),
+			{
+				var idx = deviceTypes.detectIndex({arg item, i; item == "arc"});
+				devicenum = idx;
+			}
+		);
 		if(
 			(portlst[devicenum].value).notNil
 			&& (columns[devicenum].value).notNil,
@@ -86,6 +89,8 @@ MonomeArc : Monome{
 						Monome.buildOSCResponders;
 
 						dvcID = devicenum;
+						OSCdef(("keyFunc_" ++ dvcID).asSymbol).free;
+						OSCdef(("deltaFunc_" ++ dvcID).asSymbol).free;
 						oscout = NetAddr.new("localhost", portlst[devicenum].value);
 						Post << "MonomeArc: using device on port #" << portlst[devicenum].value << Char.nl;
 
@@ -107,7 +112,6 @@ MonomeArc : Monome{
 						addCallbackComplete[dvcID] = false;
 						addCallback.value(registeredDevices[dvcID], portlst[dvcID], prefixes[dvcID]);
 						seroscnet.sendMsg("/serialosc/notify", "127.0.0.1", NetAddr.localAddr.port);
-						isArc = true;
 					},
 					{
 						("!! no monome arc detected at device slot " ++ devicenum).warn;
@@ -135,9 +139,18 @@ MonomeArc : Monome{
 			("deltaFunc_" ++ dvcID).asSymbol,
 			{ arg message, time, addr, recvPort;
 				var n = message[1], d = message[2];
+				tick[n] = tick[n] + d;
 				if( dvcID.notNil,{
 					if( this.port.value() == addr.port, {
-						func.value(n, d);
+						if( tick[n].abs >= sens[n], {
+							var val = tick[n]/sens[n];
+							if( val > 0,
+								{val = val.floor},
+								{val = val.ceil}
+							);
+							func.value(n, val);
+							tick[n] = tick[n].mod(sens[n]);
+						});
 					});
 				});
 			},
@@ -160,18 +173,18 @@ MonomeArc : Monome{
 		);
 	}
 
-	ringset { | enc, led, lev |
+	led { | ring, led, val |
 
-		oscout.sendMsg(prefixID++"/ring/set", enc,
+		oscout.sendMsg(prefixID++"/ring/set", ring,
 			(led + scaleFactor).wrap(0, 63),
-			lev);
+			val);
 	}
 
-	ringall { | enc, lev |
-		oscout.sendMsg(prefixID++"/ring/all", enc, lev);
+	all { | ring, val |
+		oscout.sendMsg(prefixID++"/ring/all", ring, val);
 	}
 
-	ringmap	{ | enc, larr |
+	ringmap	{ | ring, larr |
 
 		scaleFactor.do({
 
@@ -179,18 +192,24 @@ MonomeArc : Monome{
 
 		});
 
-		oscout.sendMsg(prefixID++"/ring/map", enc, *larr);
+		oscout.sendMsg(prefixID++"/ring/map", ring, *larr);
 
 	}
 
-	ringrange { | enc, led1, led2, lev |
+	segment { | ring, from, to, val |
 
-		oscout.sendMsg(prefixID++"/ring/range", enc, led1+scaleFactor, led2+scaleFactor, lev);
+		oscout.sendMsg(prefixID++"/ring/range", ring, from+scaleFactor, to+scaleFactor, val);
+	}
+
+
+	setSens { | ring, sensitivity |
+		if( sensitivity == 0, {sensitivity = 1});
+		sens[ring] = sensitivity;
 	}
 
 	// exercise caution when changing rotation
 	// after change, your led positions may not be desirable.
-	rot_ { arg degree;
+	setRot { arg degree;
 
 		rot = degree;
 
@@ -207,14 +226,14 @@ MonomeArc : Monome{
 		};
 
 		// flash one LED indicating north position
-		for(0, 3, { arg i; this.ringall(i, 0);});
+		for(0, 3, { arg i; this.all(i, 0);});
 
 		4.do({
 			for(0, 3, { arg i;
 
 				for(0, 30, { arg brightness;
 
-					this.ringset(i, 0, brightness.fold(0, 15));
+					this.led(i, 0, brightness.fold(0, 15));
 				});
 
 			});
@@ -283,9 +302,9 @@ MonomeArc : Monome{
 	}
 
 	cleanup {
-		for(0, 3, { arg i; this.ringall(i, 0);});
-		deltaFunc.free;
-		keyFunc.free;
+		for(0, 3, { arg i; this.all(i, 0);});
+		OSCdef(("keyFunc_" ++ dvcID).asSymbol).free;
+		OSCdef(("deltaFunc_" ++ dvcID).asSymbol).free;
 		oscout.disconnect;
 	}
 

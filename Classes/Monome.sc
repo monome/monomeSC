@@ -18,10 +18,10 @@ Monome {
 	add, addCallback, addCallbackComplete,
 	remove, removeCallback, removeCallbackComplete,
 	rows, columns,
-	portlst, prefixes, registeredDevices,
+	portlst, prefixes, registeredDevices, deviceTypes,
 	quadDirty, ledQuads, redrawTimers;
 
-	var prefixID, rot, fpsVal, isArc; // instance variables
+	var prefixID, rot, fpsVal; // instance variables
 
 	*initClass {
 
@@ -29,6 +29,7 @@ Monome {
 		removeCallback = nil;
 		portlst = List.new(0);
 		registeredDevices = List.new(0);
+		deviceTypes = List.new(0);
 		addCallbackComplete = List.new(0);
 		removeCallbackComplete = List.new(0);
 		rows = List.new(0);
@@ -56,8 +57,8 @@ Monome {
 
 	}
 
-/*	*new { arg rotation, prefix, fps;
-		^ super.new.init(prefix, rotation, fps);
+	/*	*new { arg rotation, prefix, fps;
+	^ super.new.init(prefix, rotation, fps);
 	}*/
 	*new {
 		^ super.new.init();
@@ -66,45 +67,51 @@ Monome {
 	*buildOSCResponders {
 
 		discovery = OSCdef.newMatching(\monomediscover,
-				{|msg, time, addr, recvPort|
+			{|msg, time, addr, recvPort|
 
-					var portIDX, name, sizeDiscover, rw, cl, portID, serial, model, prefix;
+				var portIDX, name, sizeDiscover, rw, cl, portID, serial, model, prefix, isArc;
 
-					sizeDiscover = [0,0];
-					serial = msg[1];
-					model = msg[2];
-					portID = msg[3];
+				sizeDiscover = [0,0];
+				serial = msg[1];
+				model = msg[2];
+				portID = msg[3];
 
-					name = msg[2].asString.replace("monome","").replace("40h",64).asInteger;
+				name = msg[2].asString.replace("monome","").replace("40h",64).asInteger;
+				isArc = msg[2].asString.contains("arc");
 
-					sizeDiscover = case
-					{name == 64 } { [8,8] }
-					{name == 128 } { [16,8] }
-					{name == 256 } { [16,16] }
-					{name == 512 } { [32,16] }
-					{msg[2].asString.replace("monome ","") == "one" } { [8,8] }
-					{msg[2].asString.replace("monome ","") == "zero" } { [16,16] }
-					{msg[2].asString.contains("arc") } { [0,0] };
+				sizeDiscover = case
+				{name == 64 } { [8,8] }
+				{name == 128 } { [16,8] }
+				{name == 256 } { [16,16] }
+				{name == 512 } { [32,16] }
+				{msg[2].asString.replace("monome ","") == "one" } { [8,8] }
+				{msg[2].asString.replace("monome ","") == "zero" } { [16,16] }
+				{msg[2].asString.contains("arc") } { [0,0] };
 
-					if( portlst.includes(portID) == false, {
-						portlst.add(portID);
-						registeredDevices.add(serial);
-						prefixes.add(prefix);
-						addCallbackComplete.add(false);
-						removeCallbackComplete.add(false);
-						("Monome device connected to port: "++portID).postln;
-						("Monome device serial: "++serial).postln;
-						("Monome device model: "++model).postln;
-						portIDX = portlst.detectIndex({arg item, i; item == portID});
-						columns.add(sizeDiscover[0]);
-						rows.add(sizeDiscover[1]);
-						addCallback.value(serial,portID,prefixes[portIDX]);
-					},{
-						// ("device already registered!!!").postln;
-					});
-					seroscnet.sendMsg("/serialosc/notify", "127.0.0.1", NetAddr.localAddr.port);
+				if( portlst.includes(portID) == false, {
+					portlst.add(portID);
+					registeredDevices.add(serial);
+					prefixes.add(prefix);
+					addCallbackComplete.add(false);
+					removeCallbackComplete.add(false);
+					("monome device connected!").postln;
+					(Char.tab ++ "model: " ++ model).postln;
+					(Char.tab ++ "port: " ++ portID).postln;
+					(Char.tab ++ "serial: " ++ serial).postln;
+					portIDX = portlst.detectIndex({arg item, i; item == portID});
+					columns.add(sizeDiscover[0]);
+					rows.add(sizeDiscover[1]);
+					if( isArc == true,
+						{ deviceTypes.add("arc") },
+						{ deviceTypes.add("grid") }
+					);
+					addCallback.value(serial,portID,prefixes[portIDX]);
+				},{
+					// ("device already registered!!!").postln;
+				});
+				seroscnet.sendMsg("/serialosc/notify", "127.0.0.1", NetAddr.localAddr.port);
 
-			}, '/serialosc/device', seroscnet);
+		}, '/serialosc/device', seroscnet);
 
 		add = OSCdef.newMatching(\monomeadd,
 			{|msg, time, addr, recvPort|
@@ -138,9 +145,10 @@ Monome {
 				});
 				portIDX = portlst.detectIndex({arg item, i; item == portID});
 				if( addCallbackComplete[portIDX] == false,{
-					("Monome device added to port: "++portID).postln;
-					("Monome device serial: "++serial).postln;
-					("Monome device model: "++model).postln;
+					("monome device added!").postln;
+					(Char.tab ++ "model: " ++ model).postln;
+					(Char.tab ++ "port: " ++ portID).postln;
+					(Char.tab ++ "serial: " ++ serial).postln;
 					addCallback.value(serial,portID,prefixes[portIDX]);
 					addCallbackComplete[portIDX] = true;
 					removeCallbackComplete[portIDX] = false;
@@ -158,9 +166,10 @@ Monome {
 				if( portIDX.notNil, {
 					if( removeCallbackComplete[portIDX] == false, {
 						removeCallback.value(msg[2],msg[1],msg[3],prefixes[portIDX]);
-						("Monome device removed from port: "++msg[3]).postln;
-						("Monome device serial: "++msg[1]).postln;
-						("Monome device model: "++msg[2]).postln;
+						("monome device removed!").postln;
+						(Char.tab ++ "model: " ++ msg[2]).postln;
+						(Char.tab ++ "port: " ++ msg[3]).postln;
+						(Char.tab ++ "serial: " ++ msg[1]).postln;
 						// we don't want to remove devices from these lists:
 						// registeredDevices.remove(msg[1]);
 						// portlst.remove(msg[3]);

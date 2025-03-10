@@ -60,7 +60,12 @@ MonomeGrid : Monome{
 	}
 
 	connect { arg devicenum;
-		if( devicenum == nil, {devicenum = 0});
+		if( devicenum == nil && deviceTypes.includesEqual("grid"),
+			{
+				var idx = deviceTypes.detectIndex({arg item, i; item == "grid"});
+				devicenum = idx;
+			}
+		);
 		if( (portlst[devicenum].value).notNil, {
 
 			var prefixDiscover;
@@ -68,6 +73,7 @@ MonomeGrid : Monome{
 			Monome.buildOSCResponders;
 
 			dvcID = devicenum;
+			OSCdef(("keyFunc_" ++ dvcID).asSymbol).free;
 			oscout = NetAddr.new("localhost", portlst[devicenum].value);
 			Post << "MonomeGrid: using device on port #" << portlst[devicenum].value << Char.nl;
 
@@ -278,7 +284,7 @@ MonomeGrid : Monome{
 
 	cleanup {
 		this.all(0);
-		keyFunc.free;
+		OSCdef(("keyFunc_" ++ dvcID).asSymbol).free;
 		oscout.disconnect;
 	}
 }

@@ -22,7 +22,7 @@ cable orientation: left = 0 (default), down = 1, right = 2, up = 3
 ARGUMENT:: prefix
 assign this arc a unique string identifier
 
-defaults to "/monomeArc" if nil
+defaults to "/monome" if nil
 
 PRIVATE:: buildOSCResponders
 
@@ -64,7 +64,7 @@ METHOD:: delta
 assign a function to interpret encoder turns
 
 ARGUMENT:: func
-function which receives encoder number (0-indexed) and delta (-1 or 1)
+function which receives encoder number (0-indexed) and delta (negative: left turn, positive: right turn)
 
 code::
 // make sure to clear any running arc code before executing
@@ -86,15 +86,15 @@ code::
 )
 ::
 
-METHOD:: ringset
+METHOD:: led
 
-ARGUMENT:: enc
+ARGUMENT:: ring
 encoder 0-3
 
 ARGUMENT:: led
-target LED 0-64
+target LED 0-63
 
-ARGUMENT:: lev
+ARGUMENT:: val
 brightness level value 0-15
 
 code::
@@ -104,34 +104,43 @@ code::
 )
 ::
 
-METHOD:: ringall
+METHOD:: all
 set all leds on a specified ring to a variable brightness
 
-ARGUMENT:: enc
+ARGUMENT:: ring
 encoder 0-3
 
-ARGUMENT:: lev
+ARGUMENT:: val
 brightness level value 0-15
 
-METHOD:: ringrange
+METHOD:: segment
 set all leds with a range on a specified ring to a variable brightness
 
-ARGUMENT:: enc
+ARGUMENT:: ring
 encoder 0-3
 
-ARGUMENT:: led1
-start of range, LED value 0-64
+ARGUMENT:: from
+start of range, LED value 0-63
 
-ARGUMENT:: led2
-end of range, LED value 0-64
+ARGUMENT:: to
+end of range, LED value 0-63
 
-ARGUMENT:: lev
+ARGUMENT:: val
 brightness level value 0-15
 
 METHOD:: usePort
 use a specific port for device communication
 
 ARGUMENT:: portnum
+
+METHOD:: setSens
+set the sensitivity divisor for each ring
+
+ARGUMENT:: ring
+encoder 0-3
+
+ARGUMENT:: sensitivity
+divisor to scale each encoder tick, default 1 (can be set to negative values for reverse deltas)
 
 METHOD:: cleanup
 all leds are turned off and osc communication is disconnected
@@ -157,9 +166,13 @@ METHOD:: fps
 RETURNS:: the device's redraw rate (frames per second)
 
 METHOD:: rows
-returns:: number of rows a grid device has (1-indexed)
+returns:: number of rows an arc device has (1-indexed, always 0)
 
 METHOD:: cols
-RETURNS:: number of columns a grid device has (1-indexed)
+RETURNS:: number of columns an arc device has (1-indexed, always 0)
 
 PRIVATE:: initArc
+PRIVATE:: ringmap
+PRIVATE:: setRot
+PRIVATE:: rows
+PRIVATE:: cols
