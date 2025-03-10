@@ -205,6 +205,7 @@ MonomeArc : Monome{
 	setSens { | ring, sensitivity |
 		if( sensitivity == 0, {sensitivity = 1});
 		sens[ring] = sensitivity;
+		tick[ring] = 0;
 	}
 
 	// exercise caution when changing rotation
