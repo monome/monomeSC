@@ -109,6 +109,10 @@ MonomeArc : Monome{
 						oscout.sendMsg("/sys/rotation", rot);
 						oscout.sendMsg("/sys/info");
 
+						// collect individual LED messages into a 'map':
+						quadDirty[dvcID] = Array.fill(4,{0});
+						ledQuads[dvcID] = Array.fill(4,{Array.fill(64,{0})});
+
 						addCallbackComplete[dvcID] = false;
 						addCallback.value(registeredDevices[dvcID], portlst[dvcID], prefixes[dvcID]);
 						seroscnet.sendMsg("/serialosc/notify", "127.0.0.1", NetAddr.localAddr.port);
@@ -173,15 +177,40 @@ MonomeArc : Monome{
 		);
 	}
 
-	led { | ring, led, val |
+	refresh {
+		for (0, 3, {
+			arg i;
+			if(quadDirty[dvcID][i] != 0,
+				{
+					oscout.sendMsg(
+						prefixID++"/ring/map",
+						i,
+						*ledQuads[dvcID][i]
+					);
+					quadDirty[dvcID][i] = 0;
+				}
+			);
+		});
 
-		oscout.sendMsg(prefixID++"/ring/set", ring,
-			(led + scaleFactor).wrap(0, 63),
-			val);
+	}
+
+	led { | ring, led, val |
+		ledQuads[dvcID][ring][(led + scaleFactor).wrap(0, 63)] = val;
+		quadDirty[dvcID][ring] = 1;
 	}
 
 	all { | ring, val |
-		oscout.sendMsg(prefixID++"/ring/all", ring, val);
+		for( 0, 63, {
+			arg i;
+			this.led(ring, i, val);
+		});
+	}
+
+	dark {
+		for( 0, 3, {
+			arg i;
+			this.all(i,0);
+		});
 	}
 
 	ringmap	{ | ring, larr |
@@ -197,8 +226,10 @@ MonomeArc : Monome{
 	}
 
 	segment { | ring, from, to, val |
-
-		oscout.sendMsg(prefixID++"/ring/range", ring, from+scaleFactor, to+scaleFactor, val);
+		for( from, to, {
+			arg i;
+			this.led(ring, i, val);
+		});
 	}
 
 

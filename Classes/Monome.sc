@@ -116,13 +116,14 @@ Monome {
 		add = OSCdef.newMatching(\monomeadd,
 			{|msg, time, addr, recvPort|
 
-				var portIDX, name, sizeDiscover, rw, cl, portID, serial, model, prefix;
+				var portIDX, name, sizeDiscover, rw, cl, portID, serial, model, prefix, isArc;
 
 				serial = msg[1];
 				model = msg[2];
 				portID = msg[3];
 
 				name = msg[2].asString.replace("monome","").replace("40h",64).asInteger;
+				isArc = msg[2].asString.contains("arc");
 
 				sizeDiscover = case
 				{name == 64 } { [8,8] }
@@ -140,6 +141,10 @@ Monome {
 					portlst.add(portID);
 					prefixes.add(prefix);
 					registeredDevices.add(serial);
+					if( isArc == true,
+						{ deviceTypes.add("arc") },
+						{ deviceTypes.add("grid") }
+					);
 					addCallbackComplete.add(false);
 					removeCallbackComplete.add(false);
 				});

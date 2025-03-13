@@ -77,7 +77,7 @@ METHOD:: key
 assign a function to interpret key presses
 
 ARGUMENT:: func
-function which receives key x/y coordinates and z state
+function which receives key (0-indexed) and state (1: down, 0: up)
 
 code::
 // make sure to clear any running arc code before executing
@@ -105,7 +105,7 @@ code::
 ::
 
 METHOD:: all
-set all leds on a specified ring to a variable brightness
+set all LEDs on a specified ring to a variable brightness
 
 ARGUMENT:: ring
 encoder 0-3
@@ -114,7 +114,7 @@ ARGUMENT:: val
 brightness level value 0-15
 
 METHOD:: segment
-set all leds with a range on a specified ring to a variable brightness
+set all LEDs with a range on a specified ring to a variable brightness
 
 ARGUMENT:: ring
 encoder 0-3
@@ -127,6 +127,9 @@ end of range, LED value 0-63
 
 ARGUMENT:: val
 brightness level value 0-15
+
+METHOD:: dark
+clears all LEDs on all rings
 
 METHOD:: usePort
 use a specific port for device communication
@@ -162,15 +165,13 @@ RETURNS:: OSC port the device is currently communicating on
 METHOD:: rotation
 RETURNS:: rotation of device (cable orientation): 0, 90, 180, 270
 
-METHOD:: fps
-RETURNS:: the device's redraw rate (frames per second)
-
 METHOD:: rows
 returns:: number of rows an arc device has (1-indexed, always 0)
 
 METHOD:: cols
 RETURNS:: number of columns an arc device has (1-indexed, always 0)
 
+PRIVATE:: fps
 PRIVATE:: initArc
 PRIVATE:: ringmap
 PRIVATE:: setRot
