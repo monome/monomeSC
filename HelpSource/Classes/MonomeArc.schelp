@@ -87,6 +87,7 @@ code::
 ::
 
 METHOD:: led
+set a single LED on a specified ring to a variable brightness (requires link::Classes/MonomeArc#-refresh:: to draw)
 
 ARGUMENT:: ring
 encoder 0-3
@@ -105,7 +106,7 @@ code::
 ::
 
 METHOD:: all
-set all LEDs on a specified ring to a variable brightness
+set all LEDs on a specified ring to a variable brightness (requires link::Classes/MonomeArc#-refresh:: to draw)
 
 ARGUMENT:: ring
 encoder 0-3
@@ -114,7 +115,7 @@ ARGUMENT:: val
 brightness level value 0-15
 
 METHOD:: segment
-set all LEDs with a range on a specified ring to a variable brightness
+set all LEDs with a range on a specified ring to a variable brightness (requires link::Classes/MonomeArc#-refresh:: to draw)
 
 ARGUMENT:: ring
 encoder 0-3
@@ -129,7 +130,10 @@ ARGUMENT:: val
 brightness level value 0-15
 
 METHOD:: dark
-clears all LEDs on all rings
+clears all LEDs on all rings (requires link::Classes/MonomeArc#-refresh:: to draw)
+
+METHOD:: refresh
+writes all queued LED messages
 
 METHOD:: usePort
 use a specific port for device communication
