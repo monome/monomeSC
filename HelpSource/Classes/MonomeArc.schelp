@@ -69,7 +69,12 @@ function which receives encoder number (0-indexed) and delta (negative: left tur
 code::
 // make sure to clear any running arc code before executing
 (
-// TODO
+~a = MonomeArc.new();
+~a.connect();
+~a.delta({
+	arg n, d;
+	[n,d, "serial: " ++~a.serial,"port: "++~a.port].postln;
+});
 )
 ::
 
@@ -82,7 +87,12 @@ function which receives key (0-indexed) and state (1: down, 0: up)
 code::
 // make sure to clear any running arc code before executing
 (
-// TODO
+~a = MonomeArc.new();
+~a.connect();
+~a.key({
+	arg n, z;
+	[n,z, "serial: " ++~a.serial,"port: "++~a.port].postln;
+});
 )
 ::
 
@@ -101,7 +111,32 @@ brightness level value 0-15
 code::
 // make sure to clear any running arc code before executing
 (
-//TODO
+Server.default = Server.local;
+
+~a = MonomeArc.new();
+
+s.waitForBoot({
+
+	var pos = [0,0,0,0];
+
+	~a.connect();
+
+	// draw notch:
+	for(0, 3, {
+		arg i;
+		~a.led(i, 0, 15);
+	});
+	~a.refresh;
+
+	~a.delta({
+		arg n, d;
+		~a.all(n, 0);
+		pos[n] = (pos[n] + d).wrap(0,63);
+		~a.led(n, pos[n], 15);
+		~a.refresh;
+	});
+});
+
 )
 ::
 
@@ -148,6 +183,39 @@ encoder 0-3
 
 ARGUMENT:: sensitivity
 divisor to scale each encoder tick, default 1 (can be set to negative values for reverse deltas)
+
+code::
+// make sure to clear any running arc code before executing
+(
+Server.default = Server.local;
+
+~a = MonomeArc.new();
+
+s.waitForBoot({
+
+	var pos = [0,0,0,0];
+
+	~a.connect();
+
+	// draw notch + set incrementing sensitivity:
+	for(0, 3, {
+		arg i;
+		~a.setSens(i, i*10);
+		~a.led(i, 0, 15);
+	});
+	~a.refresh;
+
+	~a.delta({
+		arg n, d;
+		~a.all(n, 0);
+		pos[n] = (pos[n] + d).wrap(0,63);
+		~a.led(n, pos[n], 15);
+		~a.refresh;
+	});
+});
+
+)
+::
 
 METHOD:: cleanup
 all leds are turned off and osc communication is disconnected
