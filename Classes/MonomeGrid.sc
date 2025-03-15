@@ -13,7 +13,7 @@ raja das, ezra buchla, dani derks
 
 MonomeGrid : Monome{
 
-	var prefixID, rot, fpsVal, dvcID, keyFunc, oscout, isArc; // instance variables
+	var prefixID, rot, fpsVal, dvcID, keyFunc, oscout; // instance variables
 
 	*new { arg rotation, prefix, fps;
 		var rotTranslate = [0,90,180,270];
