@@ -6,9 +6,11 @@ Communication and management for monome serialosc devices within the open-source
 
 Contains:
 
-- `Monome` class (by Raja Das, Ezra Buchla, and Dani Derks) manages serialosc server relay
-- `MonomeGrid` subclass (Ibid.) connects monome grids (all editions)
-- `MonomeArc` subclass (by Joseph Rangel and Dani Derks) connects monome arcs (all editions)
+- `Monome` class manages serialosc server relay
+- `MonomeGrid` subclass connects monome grids (all editions)
+- `MonomeArc` subclass connects monome arcs (all editions)
+
+Created by Raja Das, Ezra Buchla, Dani Derks, and Joseph Rangel.
 
 ## installation
 
@@ -21,10 +23,3 @@ To install the SuperCollider library for monome grid devices:
 - in SuperCollider, recompile the class library (`Language > Recompile Class Library`)
   - macOS: <kbd>Command</kbd> + <kbd>Shift</kbd> + <kbd>L</kbd>
   - Windows / Linux: <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>L</kbd>
-
-## study
-
-To learn these libraries, please refer to the SuperCollider studies on monome's website:
-
-- [grid](https://monome.org/docs/grid/studies/sc/)
-- [arc](https://monome.org/docs/arc/studies/sc/)

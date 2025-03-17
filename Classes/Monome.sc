@@ -84,7 +84,7 @@ Monome {
 				{name == 128 } { [16,8] }
 				{name == 256 } { [16,16] }
 				{name == 512 } { [32,16] }
-				{msg[2].asString.replace("monome ","") == "one" } { [8,8] }
+				{msg[2].asString.replace("monome ","") == "one" } { [8,16] }
 				{msg[2].asString.replace("monome ","") == "zero" } { [16,16] }
 				{msg[2].asString.contains("arc") } { [0,0] };
 
@@ -130,7 +130,7 @@ Monome {
 				{name == 128 } { [16,8] }
 				{name == 256 } { [16,16] }
 				{name == 512 } { [32,16] }
-				{msg[2].asString.replace("monome ","") == "one" } { [8,8] }
+				{msg[2].asString.replace("monome ","") == "one" } { [8,16] }
 				{msg[2].asString.replace("monome ","") == "zero" } { [16,16] }
 				{msg[2].asString.contains("arc") } { [0,0] };
 

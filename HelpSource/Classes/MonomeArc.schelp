@@ -245,7 +245,7 @@ RETURNS:: number of columns an arc device has (1-indexed, always 0)
 
 PRIVATE:: fps
 PRIVATE:: initArc
-PRIVATE:: ringmap
+PRIVATE:: ringMap
 PRIVATE:: setRot
 PRIVATE:: rows
 PRIVATE:: cols

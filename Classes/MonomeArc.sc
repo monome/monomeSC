@@ -38,18 +38,13 @@ MonomeArc : Monome{
 		sens = [1,1,1,1];
 		tick = [0,0,0,0];
 
+		if( rot == nil, {scaleFactor = 0; rot = 0} );
+		rot.round(90);
 		case
 		{ rot == 0 } { scaleFactor = 0 }
 		{ rot == 90 } { scaleFactor = 16 }
 		{ rot == 180 } { scaleFactor = 32 }
-		{ rot == 270 } { scaleFactor = 48 }
-		{ ((rot == 0) or: (rot == 90) or: (rot == 180) or: (rot == 270)).not }
-		{
-			"Did not choose valid rotation. Using default: 0".warn;
-			scaleFactor = 0;
-			rot = 0;
-		};
-
+		{ rot == 270 } { scaleFactor = 48 };
 	}
 
 	connectToPort { arg port;
@@ -206,14 +201,14 @@ MonomeArc : Monome{
 		});
 	}
 
-	dark {
+	allOff {
 		for( 0, 3, {
 			arg i;
 			this.all(i,0);
 		});
 	}
 
-	ringmap	{ | ring, larr |
+	ringMap	{ | ring, larr |
 
 		scaleFactor.do({
 
@@ -256,20 +251,6 @@ MonomeArc : Monome{
 			scaleFactor = 0;
 			rot = 0;
 		};
-
-		// flash one LED indicating north position
-		for(0, 3, { arg i; this.all(i, 0);});
-
-		4.do({
-			for(0, 3, { arg i;
-
-				for(0, 30, { arg brightness;
-
-					this.led(i, 0, brightness.fold(0, 15));
-				});
-
-			});
-		});
 
 	}
 
