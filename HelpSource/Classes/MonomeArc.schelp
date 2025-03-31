@@ -1,0 +1,248 @@
+CLASS:: MonomeArc
+summary:: Interface for monome arcs
+categories:: monome
+
+DESCRIPTION::
+Communication and management for monome serialosc arc controllers. For more information on monome see https://monome.org
+
+For details on the serialosc protocol used with grid devices see https://monome.org/docs/serialosc/serial.txt
+
+NOTE:: All arc rings and level values are 0-indexed.::
+
+CLASSMETHODS::
+
+METHOD:: new
+allocate MonomeArc object
+
+ARGUMENT:: rotation
+cable orientation: left = 0 (default), down = 1, right = 2, up = 3
+
+(also accepts 0, 90, 180, and 270 degrees)
+
+ARGUMENT:: prefix
+assign this arc a unique string identifier
+
+defaults to "/monome" if nil
+
+PRIVATE:: buildOSCResponders
+
+PRIVATE:: portlst
+
+PRIVATE:: prefixes
+
+PRIVATE:: rows
+
+PRIVATE:: columns
+
+PRIVATE:: initClass
+
+INSTANCEMETHODS::
+
+PRIVATE:: init
+
+METHOD:: connect
+choose which device to connect from the device list
+
+ARGUMENT:: devicenum
+monome device list index, begins at 0 (includes grids and arcs)
+
+if not provided, will default to index of first-connected ar
+
+METHOD:: connectToPort
+choose which device to connect via OSC port
+
+ARGUMENT:: port
+OSC port identifier
+
+METHOD:: connectToSerial
+choose which device to connect via serial string
+
+ARGUMENT:: serial
+serial identifier
+
+METHOD:: delta
+assign a function to interpret encoder turns
+
+ARGUMENT:: func
+function which receives encoder number (0-indexed) and delta (negative: left turn, positive: right turn)
+
+code::
+// make sure to clear any running arc code before executing
+(
+~a = MonomeArc.new();
+~a.connect(); // no device argument connects to the first-populated arc device
+~a.delta({
+	arg n, d;
+	[n,d, "serial: " ++~a.serial,"port: "++~a.port].postln;
+});
+)
+::
+
+METHOD:: key
+assign a function to interpret key presses
+
+ARGUMENT:: func
+function which receives key (0-indexed) and state (1: down, 0: up)
+
+code::
+// make sure to clear any running arc code before executing
+(
+~a = MonomeArc.new();
+~a.connect(); // no device argument connects to the first-populated arc device
+~a.key({
+	arg n, z;
+	[n,z, "serial: " ++~a.serial,"port: "++~a.port].postln;
+});
+)
+::
+
+METHOD:: led
+set a single LED on a specified ring to a variable brightness (requires link::Classes/MonomeArc#-refresh:: to draw)
+
+ARGUMENT:: ring
+encoder 0-3
+
+ARGUMENT:: led
+target LED 0-63
+
+ARGUMENT:: val
+brightness level value 0-15
+
+code::
+// make sure to clear any running arc code before executing
+(
+Server.default = Server.local;
+
+~a = MonomeArc.new();
+
+s.waitForBoot({
+
+	var pos = [0,0,0,0];
+
+	~a.connect(); // no device argument connects to the first-populated arc device
+
+	// draw notch:
+	for(0, 3, {
+		arg i;
+		~a.led(i, 0, 15);
+	});
+	~a.refresh;
+
+	~a.delta({
+		arg n, d;
+		~a.all(n, 0);
+		pos[n] = (pos[n] + d).wrap(0,63);
+		~a.led(n, pos[n], 15);
+		~a.refresh;
+	});
+});
+
+)
+::
+
+METHOD:: all
+set all LEDs on a specified ring to a variable brightness (requires link::Classes/MonomeArc#-refresh:: to draw)
+
+ARGUMENT:: ring
+encoder 0-3
+
+ARGUMENT:: val
+brightness level value 0-15
+
+METHOD:: segment
+set all LEDs with a range on a specified ring to a variable brightness (requires link::Classes/MonomeArc#-refresh:: to draw)
+
+ARGUMENT:: ring
+encoder 0-3
+
+ARGUMENT:: from
+start of range, LED value 0-63
+
+ARGUMENT:: to
+end of range, LED value 0-63
+
+ARGUMENT:: val
+brightness level value 0-15
+
+METHOD:: refresh
+writes all queued LED messages
+
+METHOD:: usePort
+use a specific port for device communication
+
+ARGUMENT:: portnum
+
+METHOD:: setSens
+set the sensitivity divisor for each ring
+
+ARGUMENT:: ring
+encoder 0-3
+
+ARGUMENT:: sensitivity
+divisor to scale each encoder tick, default 1 (can be set to negative values for reverse deltas)
+
+code::
+// make sure to clear any running arc code before executing
+(
+Server.default = Server.local;
+
+~a = MonomeArc.new();
+
+s.waitForBoot({
+
+	var pos = [0,0,0,0];
+
+	~a.connect(); // no device argument connects to the first-populated arc device
+
+	// draw notch + set incrementing sensitivity:
+	for(0, 3, {
+		arg i;
+		~a.setSens(i, i*10);
+		~a.led(i, 0, 15);
+	});
+	~a.refresh;
+
+	~a.delta({
+		arg n, d;
+		~a.all(n, 0);
+		pos[n] = (pos[n] + d).wrap(0,63);
+		~a.led(n, pos[n], 15);
+		~a.refresh;
+	});
+});
+
+)
+::
+
+METHOD:: cleanup
+all leds are turned off and osc communication is disconnected
+
+SUBSECTION::Accessor Methods
+
+METHOD:: prefix
+RETURNS:: device prefix
+
+METHOD:: dvcnum
+RETURNS:: index of device in device list (0-indexed)
+
+METHOD:: serial
+RETURNS:: the device's serial number
+
+METHOD:: port
+RETURNS:: OSC port the device is currently communicating on
+
+METHOD:: rotation
+RETURNS:: rotation of device (cable orientation): 0, 90, 180, 270
+
+METHOD:: rows
+returns:: number of rows an arc device has (1-indexed, always 0)
+
+METHOD:: cols
+RETURNS:: number of columns an arc device has (1-indexed, always 0)
+
+PRIVATE:: fps
+PRIVATE:: initArc
+PRIVATE:: ringMap
+PRIVATE:: setRot
+PRIVATE:: rows
+PRIVATE:: cols
