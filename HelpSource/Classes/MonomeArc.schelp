@@ -164,6 +164,9 @@ end of range, LED value 0-63
 ARGUMENT:: val
 brightness level value 0-15
 
+METHOD:: allOff
+clears the LED state of every ring (requires link::Classes/MonomeArc#-refresh:: to draw)
+
 METHOD:: refresh
 writes all queued LED messages
 
