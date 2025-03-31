@@ -23,7 +23,7 @@ To install the SuperCollider library for monome grid devices:
 - in SuperCollider, recompile the class library (`Language > Recompile Class Library`)
   - macOS: <kbd>Command</kbd> + <kbd>Shift</kbd> + <kbd>L</kbd>
   - Windows / Linux: <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>L</kbd>
-
+  
 ## study
 
 To learn these libraries, please refer to the SuperCollider studies on monome's website:

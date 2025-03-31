@@ -59,9 +59,9 @@ METHOD:: connect
 choose which device to connect from the device list
 
 ARGUMENT:: devicenum
-device list index, begins at 0
+monome device list index, begins at 0 (includes grids and arcs)
 
-if not provided, will default to 0
+if not provided, will default to index of first-connected grid
 
 METHOD:: connectToPort
 choose which device to connect via OSC port
@@ -88,7 +88,7 @@ code::
 
 s.waitForBoot({
 
-	~m.connect(0); // explicitly connect to the first-populated device
+	~m.connect(); // no device argument connects to the first-populated grid device
 	~m.key({ arg x,y,z;
 		case
 		{z == 1} {('('++x++','++y++') | key down').postln}
@@ -117,7 +117,7 @@ code::
 
 s.waitForBoot({
 
-	~m.connect(); // no device argument connects to the first-populated device
+	~m.connect(); // no device argument connects to the first-populated grid device
 
 	~m.key({ arg x,y,z;
 		~m.led(x,y,z * 15);
@@ -145,7 +145,7 @@ code::
 
 s.waitForBoot({
 
-	~m.connect(0); // explicitly connect to the first-populated device
+	~m.connect(0); // explicitly connect to the first-populated monome device
 
 	~m.key({ arg x,y,z;
 		~m.ledset(x,y,z);

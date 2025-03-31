@@ -13,7 +13,7 @@ raja das, ezra buchla, dani derks
 
 MonomeGrid : Monome{
 
-	var prefixID, rot, fpsVal, dvcID, keyFunc, oscout; // instance variables
+	var prefixID, rot, fpsVal, dvcID, keyFunc, oscout, isArc; // instance variables
 
 	*new { arg rotation, prefix, fps;
 		var rotTranslate = [0,90,180,270];
@@ -66,7 +66,7 @@ MonomeGrid : Monome{
 				devicenum = idx;
 			}
 		);
-		if( (portlst[devicenum].value).notNil, {
+		if( (portlst[devicenum].value).notNil && deviceTypes[devicenum] == "grid", {
 
 			var prefixDiscover;
 

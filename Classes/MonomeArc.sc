@@ -74,7 +74,7 @@ MonomeArc : Monome{
 		);
 		if(
 			(portlst[devicenum].value).notNil
-			&& (columns[devicenum].value).notNil,
+			&& deviceTypes[devicenum] == "arc",
 			{
 				if(
 					(columns[devicenum] * rows[devicenum] == 0),
@@ -316,6 +316,7 @@ MonomeArc : Monome{
 
 	cleanup {
 		for(0, 3, { arg i; this.all(i, 0);});
+		this.refresh;
 		OSCdef(("keyFunc_" ++ dvcID).asSymbol).free;
 		OSCdef(("deltaFunc_" ++ dvcID).asSymbol).free;
 		oscout.disconnect;
